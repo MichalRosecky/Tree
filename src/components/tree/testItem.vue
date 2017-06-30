@@ -29,38 +29,6 @@
           </div>
         </div>
       </div>
-      <!-- <div class="field is-horizontal">
-        <div class="field-label is-normal">
-          <label class="label">content</label>
-        </div>
-        <div class="field-body">
-          <div class="field is-grouped">
-            <p class="control is-expanded has-icons-left">
-              <input class="input" type="text" placeholder="url" v-model="data.content.url">
-            </p>
-          </div>
-          <div class="field">
-            <p class="control is-expanded has-icons-left has-icons-right">
-              <input class="input" placeholder="target" v-model="data.content.target">
-            </p>
-          </div>
-        </div>
-      </div>
-      <div class="field is-horizontal flex-baseline"> -->
-        <!-- <div class="field-label is-normal">
-          <label class="label">status</label>
-        </div>
-        <div class="field-body">
-          <div class="field is-grouped">
-            <p class="control is-expanded has-icons-left">
-              <vb-switch :checked="status" v-model="status" type="success"></vb-switch>
-
-            </p>
-          </div>
-
-        </div>
-      </div> -->
-
     </div>
   </div>
 </div>
