@@ -34,7 +34,8 @@ export default {
             checked: false,
             parentId: 1,
             searched: false,
-            visible: true
+            visible: true,
+            children: []
           },
           {
             label: '二级节点-2',
@@ -50,7 +51,8 @@ export default {
                 label: '三级节点-1',
                 visible: true,
                 searched: false,
-                checked: false
+                checked: false,
+                children: []
               },
               {
                 id: 5,
@@ -58,7 +60,8 @@ export default {
                 parentId: 3,
                 searched: false,
                 visible: true,
-                checked: false
+                checked: false,
+                children: [],
               }
             ]
           },
@@ -76,7 +79,8 @@ export default {
                 label: '三级节点-4',
                 checked: false,
                 searched: false,
-                visible: true
+                visible: true,
+                children: []
               },
               {
                 id: 8,
@@ -84,7 +88,8 @@ export default {
                 parentId: 6,
                 checked: false,
                 searched: false,
-                visible: true
+                visible: true,
+                children: []
               }
             ]
           }

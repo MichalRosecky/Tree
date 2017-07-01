@@ -16,8 +16,9 @@ export default class TreeStore {
       noDragClass: 'dd-nodrag',
       emptyClass: 'vim-empty-default',
       sortKey: 'sort',
-      parentKey: 'parent_id',
+      parentKey: 'parentId',
       searchKey: 'name',
+      childrenKey: "children",
       searchCls: '',
       searchShow: true,
       injectComponent: "",
@@ -181,8 +182,8 @@ export default class TreeStore {
           if (list && list.dragEl) {
             e.preventDefault();
             e =  e.touches ? e.touches[0] : e;
-            var list, parent, prev, next, depth, opt = list.options, mouse = list.mouse;
-    debugger;
+            var list, parent, prev, expand, next, depth, opt = list.options, mouse = list.mouse;
+    //debugger;
             list.dragEl.css({
               'left': e.pageX - mouse.offsetX,
               'top': e.pageY - mouse.offsetY
@@ -213,9 +214,92 @@ export default class TreeStore {
               return;
             }
 
-          }
+            // calc distance moved on this axis (and direction)
+            if (mouse.dirAx !== newAx) {
+            mouse.distAxX = 0;
+            mouse.distAxY = 0;
+            } else {
+            mouse.distAxX += Math.abs(mouse.distX);
+            if (mouse.dirX !== 0 && mouse.dirX !== mouse.lastDirX) {
+              mouse.distAxX = 0;
+            }
+            mouse.distAxY += Math.abs(mouse.distY);
+            if (mouse.dirY !== 0 && mouse.dirY !== mouse.lastDirY) {
+              mouse.distAxY = 0;
+            }
+            }
+            mouse.dirAx = newAx;
+
+            /*** move horizontal*/
+
+            if(mouse.dirAx && opt.threshold <= mouse.distAxX){
+              // reset move distance on x-axis for new phase
+            //  debugger;
+              mouse.distAxX = 0;
+              prev = this.placeEl.prev(opt.itemNodeName);
+              expand = prev.length ? this.dataExclude[prev.data('id')].expand : false;
+              // increase horizontal level if previous sibling exists and is not collapsed
+              if(mouse.distX > 0 && expand){
+                list = prev.find(opt.listNodeName).last();
+
+                if(!list.length){
+                  list = $('<' + opt.listNodeName + '/>').addClass(opt.listClass);
+                  list.append(this.placeEl);
+                  prev.append(list);
+                }else{
+
+                  // else append to next level up
+                  list = prev.children(opt.listNodeName).last();
+                  list.append(this.placeEl);
+                }
+              }
+
+              // decrease horizontal level
+            if (mouse.distX < 0) {
+              // we can't decrease a level if an item preceeds the current one
+              next = this.placeEl.next(opt.itemNodeName);
+              if (!next.length) {
+                this.placeEl.closest(opt.itemNodeName).after(this.placeEl);
+              }
+            }
+
+
+
+        }
+
+      }
 
   }
+
+  isSupportJqueryEndEvent(e){
+    e =  e.touches ? e.touches[0] : e;
+    //debugger;
+    var el, newParent, oldParent, target, newParentId, targetId;
+    if(this.dragEl){
+       el = this.dragEl.children(this.options.itemNodeName).first();
+       newParentId = this.placeEl.closest('li').data('id');
+       targetId = el.data('id');
+       newParent = this.dataMap.get(newParentId);
+       target = this.dataMap.get(targetId);
+       oldParent = this.dataMap.get(target[this.options.parentKey]);
+       target[this.options.parentKey] = newParentId;
+       if(!newParent.hasOwnProperty(this.options.childrenKey)){
+         newParent[this.options.childrenKey] = [];
+       }
+       newParent[this.options.childrenKey].push(target);
+      oldParent[this.options.childrenKey] = oldParent[this.options.childrenKey].filter(function(item){
+         return item.id != target.id;
+       });
+      //el[0].parentNode.removeChild(el[0]);
+      //this.placeEl.replaceWith(el);
+      this.placeEl.remove();
+      this.dragEl.remove();
+
+      this.reset();
+      console.log(this.data);
+    }
+  }
+
 
   isSupportJqueryDragElement(){
     var list = this;
@@ -224,12 +308,12 @@ export default class TreeStore {
     list.w = list.$(document);
     list.el = list.$('#'+list.options.treeId);
 
-    debugger;
+    ////debugger;
     list.placeEl = $('<div class="' + list.options.placeClass + '"/>');
 
 
     var onStartEvent = function(e) {
-        //debugger;
+        ////debugger;
         list.isSupportJqueryStartEvent(e);
     };
 
@@ -237,16 +321,19 @@ export default class TreeStore {
       list.isSupportJqueryMoveEvent(e);
     };
 
+   var onEndEvent = function(e){
+     list.isSupportJqueryEndEvent(e);
+   }
     if (hasTouch) {
       list.el[0].addEventListener('touchstart', onStartEvent, false);
       window.addEventListener('touchmove', onMoveEvent, false);
-      // window.addEventListener('touchend', onEndEvent, false);
-      // window.addEventListener('touchcancel', onEndEvent, false);
+       window.addEventListener('touchend', onEndEvent, false);
+       window.addEventListener('touchcancel', onEndEvent, false);
     }
 
     list.el.on('mousedown', onStartEvent);
     list.w.on('mousemove', onMoveEvent);
-    // list.w.on('mouseup', onEndEvent);
+    list.w.on('mouseup', onEndEvent);
 
   }
   isNullOrEmpty (world) {
@@ -277,7 +364,7 @@ export default class TreeStore {
 
     let filterFunc = (searchOptions.customFilter && typeof (searchOptions.customFilter) === 'function') ? searchOptions.customFilter : _filterNode
     this.datas.forEach(node => {
-      debugger;
+      //debugger;
       node.visible = filterFunc(keyworld, node)
       node.searched = false
       if (node.visible) {

@@ -30,9 +30,14 @@ export default {
     treeDataExclude: [Array],
     option: [Object]
   },
+  watch: {
+    nodeData: function(){
+      console.log("hello world");
+    }
+  },
   data() {
     return {
-      nodeData: [],
+      //nodeData: [],
       nodeDataExclude: []
     }
   },
@@ -54,8 +59,12 @@ export default {
     }
     this.nodeData = (this.treeData || []).slice(0);
     this.nodeDataExclude = (this.treeDataExclude || []).slice(0);
-    //console.log(this.nodeData);
-    //console.log(this.treeDataMap.get(1).visible);
+
+
+    var self = this
+    this.nodeData.forEach(function (row, i) {
+      self.$watch('row', function () { /* ... */}, { deep: true })
+    })
   },
   methods: {
     handleNodeExpand(id) {

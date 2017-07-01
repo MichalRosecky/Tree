@@ -13,7 +13,7 @@
     </p>
   </div>
   <div class="vim-tree" :id="store.options.treeId">
-    <tree-node :treeData='store.data' :treeDataExclude="store.dataExclude" :option="store.options" @handlecheckedChange="handlecheckedChange"></tree-node>
+    <tree-node :treeData='treeDataNode' :treeDataExclude="store.dataExclude" :option="store.options" @handlecheckedChange="handlecheckedChange"></tree-node>
   </div>
 </div>
 </template>
@@ -29,6 +29,11 @@ export default {
   data() {
     return {
       search: null
+    }
+  },
+  computed: {
+    treeDataNode(){
+      return this.store.data;
     }
   },
   created() {
