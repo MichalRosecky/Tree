@@ -2,7 +2,7 @@ const pinyin = require('chinese-to-pinyin')
 export default class TreeStore {
   constructor (data) {
 
-    this.data=data.data;
+    this.data=data.data instanceof Array ? data.data: [data.data];
     this.options = {
       treeId: 'treeId-'+new Date().getTime(),
       listNodeName: 'ul',
@@ -28,6 +28,7 @@ export default class TreeStore {
     };
     this.reset();
     this.$ = window.jQuery;
+    this.moveHorizontal = 0;
 
     this.hasPointerEvents = (function() {
       var el = document.createElement('div'),
@@ -57,7 +58,7 @@ export default class TreeStore {
       let i = 0;
       for (let node of root) {
         this.dataMap.set(node.id, node);
-        this.dataExclude[node.id] = {visible: true, expand: true};
+        this.dataExclude[node.id] = {visible: true, expand: true, childrenLength: node.children.length};
         node[this.options.sortKey] = i++;
         if (node.children && node.children.length > 0) _traverseNodes(node.children)
       }
@@ -235,37 +236,72 @@ export default class TreeStore {
             if(mouse.dirAx && opt.threshold <= mouse.distAxX){
               // reset move distance on x-axis for new phase
             //  debugger;
-              mouse.distAxX = 0;
-              prev = this.placeEl.prev(opt.itemNodeName);
-              expand = prev.length ? this.dataExclude[prev.data('id')].expand : false;
-              // increase horizontal level if previous sibling exists and is not collapsed
-              if(mouse.distX > 0 && expand){
-                list = prev.find(opt.listNodeName).last();
+                mouse.distAxX = 0;
+                prev = this.placeEl.prev(opt.itemNodeName);
+                expand = prev.length ? this.dataExclude[prev.data('id')].expand : false;
+                // increase horizontal level if previous sibling exists and is not collapsed
+                if(mouse.distX > 0 && expand){
+                  list = prev.find(opt.listNodeName).last();
 
-                if(!list.length){
-                  list = $('<' + opt.listNodeName + '/>').addClass(opt.listClass);
-                  list.append(this.placeEl);
-                  prev.append(list);
-                }else{
+                  if(!list.length){
+                    list = $('<' + opt.listNodeName + '/>').addClass(opt.listClass);
+                    list.append(this.placeEl);
+                    prev.append(list);
+                  }else{
 
-                  // else append to next level up
-                  list = prev.children(opt.listNodeName).last();
-                  list.append(this.placeEl);
+                    // else append to next level up
+                    list = prev.children(opt.listNodeName).last();
+                    list.append(this.placeEl);
+                  }
+                  this.moveHorizontal = 1;
                 }
+
+                // decrease horizontal level
+              if (mouse.distX < 0) {
+                // we can't decrease a level if an item preceeds the current one
+                next = this.placeEl.next(opt.itemNodeName);
+                if (!next.length) {
+                  this.placeEl.closest(opt.itemNodeName).after(this.placeEl);
+                }
+                this.moveHorizontal = -1;
               }
 
-              // decrease horizontal level
-            if (mouse.distX < 0) {
-              // we can't decrease a level if an item preceeds the current one
-              next = this.placeEl.next(opt.itemNodeName);
-              if (!next.length) {
-                this.placeEl.closest(opt.itemNodeName).after(this.placeEl);
-              }
+
+
             }
 
-
-
-        }
+            /* move vertical*/
+            if(!mouse.dirAx){
+                var isEmpty = false;
+                //debugger;
+                // find list item under cursor
+                if (!this.hasPointerEvents) {
+                  this.dragEl[0].style.visibility = 'hidden';
+                }
+                this.pointEl = $(document.elementFromPoint(e.pageX - document.body.scrollLeft, e.pageY - (window.pageYOffset || document.documentElement.scrollTop)));
+                if (!this.hasPointerEvents) {
+                  this.dragEl[0].style.visibility = 'visible';
+                }
+                if (this.pointEl.hasClass(opt.handleClass)) {
+                  this.pointEl = this.pointEl.parent(opt.itemNodeName);
+                }
+                if (this.pointEl.hasClass(opt.emptyClass)) {
+                  isEmpty = true;
+                } else if (!this.pointEl.length || !this.pointEl.hasClass(opt.itemClass)) {
+                  return;
+                }
+                var before = e.pageY < (this.pointEl.offset().top + this.pointEl.height() / 2);
+                // if empty create new list to replace empty placeholder
+                if (isEmpty) {
+                  list = $(document.createElement(opt.listNodeName)).addClass(opt.listClass);
+                  list.append(this.placeEl);
+                  this.pointEl.replaceWith(list);
+                } else if (before) {
+                  this.pointEl.before(this.placeEl);
+                } else {
+                  this.pointEl.after(this.placeEl);
+                }
+            }
 
       }
 
@@ -274,33 +310,73 @@ export default class TreeStore {
   isSupportJqueryEndEvent(e){
     e =  e.touches ? e.touches[0] : e;
     //debugger;
-    var el, newParent, oldParent, target, newParentId, targetId;
+    var el, target, newParentId, targetId, oldParentId, sort;
     if(this.dragEl){
+      //debugger;
        el = this.dragEl.children(this.options.itemNodeName).first();
+       // have bug
+       sort = this.placeEl.prevAll(this.options.itemNodeName).length;
        newParentId = this.placeEl.closest('li').data('id');
        targetId = el.data('id');
-       newParent = this.dataMap.get(newParentId);
        target = this.dataMap.get(targetId);
-       oldParent = this.dataMap.get(target[this.options.parentKey]);
-       target[this.options.parentKey] = newParentId;
-       if(!newParent.hasOwnProperty(this.options.childrenKey)){
-         newParent[this.options.childrenKey] = [];
-       }
-       newParent[this.options.childrenKey].push(target);
-      oldParent[this.options.childrenKey] = oldParent[this.options.childrenKey].filter(function(item){
-         return item.id != target.id;
-       });
-      //el[0].parentNode.removeChild(el[0]);
-      //this.placeEl.replaceWith(el);
-      this.placeEl.remove();
-      this.dragEl.remove();
+       oldParentId = target[this.options.parentKey];
+       target[this.options.parentKey] = newParentId ? newParentId : 0;
+       target[this.options.sortKey] = sort ? sort : 0;
 
+       if(newParentId){
+         this.dataExclude[newParentId].childrenLength++;
+       }
+       if(oldParentId){
+         this.dataExclude[oldParentId].childrenLength--;
+       }
+       this.moveNode(newParentId, oldParentId, target);
+      //  if(this.moveHorizontal == -1 || this.moveHorizontal == 0){
+      //    el[0].parentNode.removeChild(el[0]);
+      //    this.placeEl.replaceWith(el);
+      //    this.dragEl.remove();
+      //  }
+      //  if(this.moveHorizontal == 1){
+      //    this.placeEl.remove();
+      //    this.dragEl.remove();
+      //  }
+      if(this.moveHorizontal == 0){
+           el[0].parentNode.removeChild(el[0]);
+           this.placeEl.replaceWith(el);
+           this.dragEl.remove();
+      }else{
+           this.placeEl.remove();
+           this.dragEl.remove();
+      }
+       this.moveHorizontal = 0;
       this.reset();
       console.log(this.data);
     }
   }
 
-
+  moveNode(newParentId, oldParentId, target){
+    if(newParentId != oldParentId){
+      if(newParentId){
+         var newParent = this.dataMap.get(newParentId);
+         if(!newParent.hasOwnProperty(this.options.childrenKey)){
+           newParent[this.options.childrenKey] = [];
+         }
+         newParent[this.options.childrenKey].push(target);
+      }else{
+         newParent = this.data;
+         newParent.push(target);
+      }
+      if(oldParentId){
+       var oldParent = this.dataMap.get(oldParentId);
+        oldParent[this.options.childrenKey] = oldParent[this.options.childrenKey].filter(function(item){
+          return item.id != target.id;
+        });
+      }else{
+         this.data = this.data.filter(function(item){
+           return item.id != target.id;
+         });
+      }
+    }
+  }
   isSupportJqueryDragElement(){
     var list = this;
     var hasTouch = 'ontouchstart' in document;

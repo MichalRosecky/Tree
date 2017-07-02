@@ -11,12 +11,12 @@
 </ul> -->
 <ul class="vim-ul-default">
   <li v-for="item in nodeData" :data-id="item.id"  v-show="nodeDataExclude[item.id].visible"  class="vim-li-default">
-    <span class="icon vim-tree-expand-collapse" v-if="item.children && item.children.length > 0" @click.stop='handleNodeExpand(item.id)'>
+    <span class="icon vim-tree-expand-collapse" v-if="nodeDataExclude[item.id].childrenLength > 0" @click.stop='handleNodeExpand(item.id)'>
       <i :class="[nodeDataExclude[item.id].expand ? 'fa fa-plus-square-o' : 'fa fa-minus-square-o']"></i>
     </span>
     <component v-if="option.injectComponent" :is="option.injectComponent" :data="item">
     </component>
-    <tree-node v-if="item.children && item.children.length > 0" :treeData="item.children" :treeDataExclude="nodeDataExclude" :option="option" v-show="nodeDataExclude[item.id].expand">
+    <tree-node v-if="nodeDataExclude[item.id].childrenLength > 0" :treeData="item.children" :treeDataExclude="nodeDataExclude" :option="option" v-show="nodeDataExclude[item.id].expand">
     </tree-node>
   </li>
 </ul>
@@ -30,11 +30,11 @@ export default {
     treeDataExclude: [Array],
     option: [Object]
   },
-  watch: {
-    nodeData: function(){
-      console.log("hello world");
-    }
-  },
+  // watch: {
+  //   nodeData: function(){
+  //     console.log("hello world");
+  //   }
+  // },
   data() {
     return {
       //nodeData: [],
@@ -61,16 +61,15 @@ export default {
     this.nodeDataExclude = (this.treeDataExclude || []).slice(0);
 
 
-    var self = this
-    this.nodeData.forEach(function (row, i) {
-      self.$watch('row', function () { /* ... */}, { deep: true })
-    })
+    // var self = this, childrenKey = self.option.childrenKey;
+    // this.nodeData.forEach(function (node, i) {
+    //   var children;
+    //   self.$watch('node', function () { console.log("hello world"); }, { deep: true });
+    // })
   },
   methods: {
     handleNodeExpand(id) {
       this.nodeDataExclude[id].expand = !this.nodeDataExclude[id].expand;
-      // console.log(this.nodeDataExclude[id]);
-      // console.log(this.treeDataExclude[id]);
     },
     handlecheckedChange(node) {
       this.$emit('handlecheckedChange', node)

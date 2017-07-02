@@ -42,6 +42,11 @@ export default {
       data: (this.treeData || []).slice(0),
       options: this.options
     })
+    var self = this;
+    // this.store.data.forEach(function (node) {
+    //   self.$watch('node', function () { console.log("hello world"); }, { deep: true, immediate: true });
+    // });
+
   },
   mounted() {
     this.store.loadDragComponent();
