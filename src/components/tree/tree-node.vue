@@ -1,22 +1,13 @@
 <template>
-<!-- <ul>
-  <li v-for='item in nodeData' v-show="treeDataMap.get(item.id).visible" :class="[(item.children && item.children.length > 0) ? '':'leaf']">
-    <i v-if="item.children && item.children.length > 0" @click.stop='handleNodeExpand(item)' :class="[item.open? 'tree-open':'tree-close','icon']">
-        </i>
-    <input type="checkbox" class="check" v-if="options.showCheckbox" v-model='item.checked' @click.stop="handlecheckedChange(item)" />
-    <span @click="handleNode(item)" :class="{'node-selected':(item.checked && !options.showCheckbox) || item.searched }">{{item.label}}</span>
-
-    <tree-node v-if="item.children && item.children.length > 0" :treeDataMap="treeDataMap" @handlecheckedChange="handlecheckedChange" v-show='item.open' :treeData="item.children"></tree-node>
-  </li>
-</ul> -->
 <ul class="vim-ul-default">
-  <li v-for="item in nodeData" :data-id="item.id"  v-show="nodeDataExclude[item.id].visible"  class="vim-li-default">
-    <span class="icon vim-tree-expand-collapse" v-if="nodeDataExclude[item.id].childrenLength > 0" @click.stop='handleNodeExpand(item.id)'>
-      <i :class="[nodeDataExclude[item.id].expand ? 'fa fa-plus-square-o' : 'fa fa-minus-square-o']"></i>
+  <li v-for="(item, index) in nodeData" :data-id="item.id"  v-show="showHide[item.id].nodeVisible"  class="vim-li-default">
+
+    <span class="icon vim-tree-expand-collapse" v-if="showHide[item.id].nodeCL > 0" @click.stop='handleNodeExpand(item.id)'>
+      <i :class="showHide[item.id].nodeExpand ? 'fa fa-plus-square-o' : 'fa fa-minus-square-o' "></i>
     </span>
-    <component v-if="option.injectComponent" :is="option.injectComponent" :data="item">
+    <component v-if="treeOptions.injectComponent" :is="treeOptions.injectComponent" :data="item">
     </component>
-    <tree-node v-if="nodeDataExclude[item.id].childrenLength > 0" :treeData="item.children" :treeDataExclude="nodeDataExclude" :option="option" v-show="nodeDataExclude[item.id].expand">
+    <tree-node v-if="item[treeOptions.childrenKey].length > 0" :includeInfo="includeInfo" :treeData="item[treeOptions.childrenKey]"  :treeOptions="treeOptions">
     </tree-node>
   </li>
 </ul>
@@ -27,49 +18,127 @@ export default {
   name: 'treeNode',
   props: {
     treeData: [Array],
-    treeDataExclude: [Array],
-    option: [Object]
+  //  moveTreeData: [Object],
+    treeOptions: [Object],
+    // dataMap: {Map},
+    // updateAction: [Object]
+    includeInfo: [Array]
   },
-  // watch: {
-  //   nodeData: function(){
-  //     console.log("hello world");
-  //   }
-  // },
   data() {
     return {
-      //nodeData: [],
-      nodeDataExclude: []
+      nodeData: [],
+      moveData: {},
+      showHide: []
     }
   },
+  // watch:{
+  //   moveData: {
+  //     handler: function(val, oldVal){
+  //       var oldP, newP, t, oldF = 0, newF = 0, opt = this.treeOptions, arr = [], oldSort, newSort, that = this;
+  //       if(val.status){
+  //     //    debugger;
+  //         oldP = val.oldParentId, newP = val.newParentId, t = this.dataMap.get(val.targetId), oldSort = val.oldSort, newSort = val.newSort;
+  //         this.nodeData.forEach(function(item, index){
+  //           if(item[opt.parentKey] == newP)
+  //             newF = 1;
+  //           if(item[opt.parentKey] == oldP)
+  //             oldF = 1;
+  //
+  //           if(item.id == newP && item[opt.childrenKey].length == 0 && opt.added == false ){
+  //             item[opt.childrenKey].push(t);
+  //             opt.added = true;
+  //           }
+  //
+  //           if(item.id == oldP && item[opt.childrenKey].length == 1){
+  //             item[opt.childrenKey] = [];
+  //             opt.removed = true;
+  //             debugger
+  //           }
+  //         });
+  //
+  //         //
+  //         // if(this.nodeData.length == 1 && this.nodeData[0].id == t.id && opt.removed == false){
+  //         //   debugger;
+  //         //   this.nodeData = null;
+  //         //   opt.removed = true;
+  //         // }
+  //
+  //
+  //       }
+  //       // newParent == oldParent
+  //       if(newF == 1 && oldF == 1){
+  //
+  //       }
+  //       if(newF ==1 && oldF == 0 && opt.added == false){
+  //         //debugger;
+  //         this.nodeData.forEach(function(item){
+  //            if(item[opt.sortKey] < newSort){
+  //              arr[item[opt.sortKey]] = item;
+  //            }
+  //            if(newSort <= item[opt.sortKey]){
+  //              arr[item[opt.sortKey] + 1] = item;
+  //              item[opt.sortKey]++;
+  //            }
+  //         });
+  //         arr[newSort] = t;
+  //         opt.added = true;
+  //       //  debugger;
+  //       }
+  //       if(newF == 0 && oldF == 1 && opt.removed == false){
+  //       //  debugger
+  //         this.nodeData.forEach(function(item){
+  //            if(item[opt.sortKey] < oldSort && item.id != t.id){
+  //              arr[item[opt.sortKey]] = item;
+  //            }
+  //            if(oldSort < item[opt.sortKey] && item.id != t.id){
+  //              arr[item[opt.sortKey] - 1] = item;
+  //              item[opt.sortKey]--;
+  //            }
+  //         });
+  //         opt.removed = true;
+  //       //  debugger;
+  //       }
+  //
+  //       if( (oldF || newF)){
+  //         debugger;
+  //         if(arr.length > 0){
+  //           this.nodeData = null;
+  //           this.nodeData = arr;
+  //           if(this.nodeData[0][opt.parentKey] == 3){
+  //             debugger;
+  //             console.log(this.nodeData);
+  //           }
+  //         }
+  //       }
+  //       if(opt.removed && opt.added){
+  //         this.updateAction.s = newSort;
+  //         this.updateAction.p = newP;
+  //         this.updateAction.t = t.id;
+  //       }
+  //       return ;
+  //     },
+  //     deep: true
+  //   }
+  // },
   computed: {
 
   },
   created() {
-  //  console.log(this.option);
-    const parent = this.$parent
-    if (parent.isTree) {
-      this.tree = parent
-    } else {
-      this.tree = parent.tree
-    }
-
-    const tree = this.tree
-    if (!tree) {
-      console.warn('找不到树节点')
-    }
     this.nodeData = (this.treeData || []).slice(0);
-    this.nodeDataExclude = (this.treeDataExclude || []).slice(0);
-
-
-    // var self = this, childrenKey = self.option.childrenKey;
-    // this.nodeData.forEach(function (node, i) {
-    //   var children;
-    //   self.$watch('node', function () { console.log("hello world"); }, { deep: true });
-    // })
+    this.moveData = this.moveTreeData;
+    this.showHide = (this.includeInfo || []).slice(0);
   },
   methods: {
     handleNodeExpand(id) {
-      this.nodeDataExclude[id].expand = !this.nodeDataExclude[id].expand;
+      //this.nodeDataExclude[id].expand = !this.nodeDataExclude[id].expand;
+      debugger;
+      var target;
+      if(window.jQuery){
+        target = $(event.target).closest('li');
+        target.children('ul').toggle();
+      }
+
+      this.showHide[id].nodeExpand = !this.includeInfo[id].nodeExpand;
     },
     handlecheckedChange(node) {
       this.$emit('handlecheckedChange', node)

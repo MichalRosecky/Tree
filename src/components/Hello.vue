@@ -1,6 +1,17 @@
 <template>
 <div class="hello">
-  <tree ref='tree' :treeData="treeData" :options="options" />
+  <div class="tree">
+    <tree ref='tree' :treeData="treeData" :options="options"/>
+  </div>
+    <div class="display">
+    <pre>
+      <p v-for="item in formated">
+        <span>id: {{item.id}} , </span><span> label: {{item.label}}  , </span><span> sort: {{item.sort}} , </span><span> parentId: {{item.parentId}} </span>
+      </p>
+    </pre>
+    <a class="button is-dark" @click="getMovement">get data clickMe</a>
+  </div>
+
 </div>
 </template>
 
@@ -10,6 +21,7 @@ export default {
   name: 'hello',
   data() {
     return {
+      formated: [],
       options: {
         showCheckbox: true,
         search: {
@@ -22,7 +34,7 @@ export default {
       },
       treeData: [{
         id: 1,
-        label: '一级节点',
+        label: 'id: 1',
         open: true,
         checked: false,
         parentId: null,
@@ -30,7 +42,7 @@ export default {
         searched: false,
         children: [{
             id: 2,
-            label: '二级节点-1',
+            label: 'id: 2',
             checked: false,
             parentId: 1,
             searched: false,
@@ -38,7 +50,7 @@ export default {
             children: []
           },
           {
-            label: '二级节点-2',
+            label: 'id: 3',
             open: true,
             checked: false,
             id: 3,
@@ -48,7 +60,7 @@ export default {
             children: [{
                 id: 4,
                 parentId: 3,
-                label: '三级节点-1',
+                label: 'id: 4',
                 visible: true,
                 searched: false,
                 checked: false,
@@ -56,7 +68,7 @@ export default {
               },
               {
                 id: 5,
-                label: '三级节点-2',
+                label: 'id: 5',
                 parentId: 3,
                 searched: false,
                 visible: true,
@@ -66,7 +78,7 @@ export default {
             ]
           },
           {
-            label: '二级节点-3',
+            label: 'id: 6',
             open: true,
             checked: false,
             id: 6,
@@ -76,7 +88,7 @@ export default {
             children: [{
                 id: 7,
                 parentId: 6,
-                label: '三级节点-4',
+                label: 'id: 7',
                 checked: false,
                 searched: false,
                 visible: true,
@@ -84,7 +96,7 @@ export default {
               },
               {
                 id: 8,
-                label: '三级节点-5',
+                label: 'id: 8',
                 parentId: 6,
                 checked: false,
                 searched: false,
@@ -99,6 +111,11 @@ export default {
   },
   components: {
     Tree
+  },
+  methods: {
+    getMovement(){
+      this.formated = this.$refs.tree.getFomatedData();
+    }
   }
 }
 </script>
@@ -106,9 +123,16 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
 .hello {
-  width: 50vw;
-  height: 50vh;
-  margin: auto;
+ display: flex;
+ justify-content: space-around;
+}
+.tree{
+  min-width: 30vw;
+
+}
+.display{
+  min-width: 30vw;
+  margin-top: 20px;
 }
 .test-item-search-class{
   justify-content: center;

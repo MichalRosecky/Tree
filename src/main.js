@@ -1,5 +1,4 @@
-// The Vue build version to load with the `import` command
-// (runtime-only or standalone) has been set in webpack.base.conf with an alias.
+
 import Vue from 'vue'
 import App from './App'
 import router from './router'
@@ -15,3 +14,6 @@ new Vue({
   template: '<App/>',
   components: { App }
 })
+//
+// import VueDragSortTree from './components/tree/tree.vue'
+// export default VueDragSortTree;

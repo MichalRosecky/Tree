@@ -1,6 +1,6 @@
 <template>
 <div class="vue-tree">
-  <div class="field has-addons" :class="store.options.searchCls" v-show="store.options.searchShow">
+  <div class="field has-addons" :class="treeOptions.searchCls" v-show="treeOptions.searchShow">
     <p class="control is-expanded">
       <input class="input" type="text" placeholder="search">
     </p>
@@ -12,14 +12,17 @@
       </a>
     </p>
   </div>
-  <div class="vim-tree" :id="store.options.treeId">
-    <tree-node :treeData='treeDataNode' :treeDataExclude="store.dataExclude" :option="store.options" @handlecheckedChange="handlecheckedChange"></tree-node>
+  <div class="vim-tree" :id="treeOptions.treeId" v-on:mousedown="dragStart" v-on:mousemove="dragMove" v-on:mouseup="dragStop">
+    <tree-node  :treeData='treeDataNode' :treeOptions="treeOptions" :includeInfo="includeInfo" @handlecheckedChange="handlecheckedChange"></tree-node>
   </div>
-</div>
+  <div v-show="placeEl" :class="treeOptions.placeClass"></div>
+  <ul v-show="dragEl" :class="[treeOptions.listClass , treeOptions.dragClass]"></ul>
+  </div>
 </template>
 <script>
 import TreeNode from './tree-node.vue'
-import TreeStore from './tree-store'
+//import TreeStore from './tree-store'
+import Vue from 'vue'
 export default {
   name: 'tree',
   props: {
@@ -28,58 +31,374 @@ export default {
   },
   data() {
     return {
-      search: null
+      search: null,
+      treeDataNode: [],
+      dragEl: false,
+      placeEl: false,
+      moveData: [],
+      updateAction: {
+        s: "",
+        p: "",
+        t: ""
+      },
+      includeInfo: [],
+      treeOptions: {
+        treeId: 'treeId-'+new Date().getTime(),
+        listNodeName: 'ul',
+        itemNodeName: 'li',
+        rootClass: 'dd',
+        listClass: 'vim-ul-default',
+        itemClass: 'vim-li-default',
+        dragClass: 'vim-dragel-default',
+        handleClass: 'vim-handle-default',
+        placeClass: 'vim-placeholder-default',
+        noDragClass: 'dd-nodrag',
+        emptyClass: 'vim-empty-default',
+        sortKey: 'sort',
+        parentKey: 'parentId',
+        searchKey: 'name',
+        childrenKey: "children",
+        searchCls: '',
+        searchShow: false,
+        injectComponent: "",
+        group: 0,
+        maxDepth: 5,
+        threshold: 20,
+        removed: false,
+        added: false
+      },
     }
   },
-  computed: {
-    treeDataNode(){
-      return this.store.data;
-    }
-  },
+  // watch:{
+  //   moveData: {
+  //     handler: function(val, oldVal){
+  //       console.log(val);
+  //     },
+  //     deep: true
+  //   },
+  // updateAction: {
+  //   handler: function(val, oldVal){
+  //     var t = this.dataMap.get(val.t);
+  //     t[this.treeOptions.sortKey] = val.s;
+  //     t[this.treeOptions.parentKey] = val.p;
+  //     //console.log(this.dataMap.get(3));
+  //     //console.log(this.dataMap.get(4));
+  //   },
+  //   deep: true
+  // },
+  //   search: function(val) {
+  //     //this.store.filterNodes(val, this.options.search)
+  //   }
+  // },
   created() {
-    this.isTree = true
-    this.store = new TreeStore({
-      data: (this.treeData || []).slice(0),
-      options: this.options
-    })
-    var self = this;
-    // this.store.data.forEach(function (node) {
-    //   self.$watch('node', function () { console.log("hello world"); }, { deep: true, immediate: true });
-    // });
 
+    for (let option in this.options) {
+      if(this.options.hasOwnProperty(option))
+        this.treeOptions[option] = this.options[option];
+    }
+
+    this.dataMap = new Map();
+    const _traverseNodes = (root) => {
+      let i = 0;
+      for (let node of root) {
+        this.dataMap.set(node.id, node);
+        this.includeInfo[node.id] = {};
+        this.includeInfo[node.id].nodeVisible = true;
+        this.includeInfo[node.id].nodeExpand = true;
+        this.includeInfo[node.id].nodeCL = node.children.length;
+        node[this.treeOptions.sortKey] = i++;
+        if (node.children && node.children.length > 0) _traverseNodes(node.children)
+      }
+    }
+    this.treeData = this.treeData instanceof Array ? this.treeData: [this.treeData];
+    _traverseNodes(this.treeData);
+    this.treeDataNode = this.treeData;
+
+
+
+    this.reset();
+
+    //this.$watch('this.moveData', function (newValue, oldValue) { console.log(newValue); }, { deep: true });
   },
   mounted() {
-    this.store.loadDragComponent();
-  },
-  watch: {
-    search: function(val) {
-      this.store.filterNodes(val, this.options.search)
-    }
+
   },
   methods: {
+    getFomatedData(){
+      var res = [];
+      var opt = this.treeOptions;
+      this.dataMap.forEach(function(item){
+        var temp = {};
+        for(var key in item){
+          if(key != opt.childrenKey){
+            temp[key] = item[key];
+          }
+        }
+        res.push(temp);
+      });
+      return res;
+    },
+    userOperation(){
+      return this.moveData;
+    },
+    dragStart: function(e){
+      var handle, mouse = this.mouse, target, dragItem, opt = this.treeOptions, placeEl, dragEl;
+      if(window.jQuery){
+
+        // get mouse's offset
+        mouse.offsetX = e.offsetX !== undefined ? e.offsetX : e.pageX - target.offset().left;
+        mouse.offsetY = e.offsetY !== undefined ? e.offsetY : e.pageY - target.offset().top;
+        mouse.startX = mouse.lastX = e.pageX;
+        mouse.startY = mouse.lastY = e.pageY;
+
+        //$ = window.jQuery;
+        handle = $(e.target);
+        if (!handle.hasClass(opt.handleClass)) {
+          if (handle.closest('.' + opt.noDragClass).length) {
+            return;
+          }
+          handle = handle.closest('.' + opt.handleClass);
+        }
+        if (!handle.length || this.dragEl) {
+          return;
+        }
+
+        e.preventDefault();
+        target = $(e.target);
+        dragItem = target.closest(opt.itemNodeName);
+
+        this.oldP = dragItem.parent(opt.listNodeName);
+
+        //debugger
+        //set the placeEl
+        this.placeEl = true;
+        placeEl = $('.'+opt.placeClass);
+        placeEl.css('height', dragItem.height());
+        // set the dragEl
+        this.dragEl = true;
+        dragEl = $('.'+opt.dragClass);
+        dragEl.children().remove();
+        dragEl.css('width', dragItem.width());
+
+        // move dragItem to the dragEl
+        dragItem.after(placeEl);
+        dragItem[0].parentNode.removeChild(dragItem[0]);
+        dragItem.appendTo(dragEl);
+
+// debugger;
+        dragEl.css({
+          'left': e.pageX - mouse.offsetX,
+          'top': e.pageY - mouse.offsetY
+        });
+
+
+      }
+    },
+    dragMove: function(e){
+
+      var dragEl, placeEl, parent, prev, expand, next, opt , list, mouse ;
+      if(this.dragEl){
+        if(window.jQuery){
+          opt = this.treeOptions, mouse = this.mouse , dragEl= $('.'+opt.dragClass), placeEl= $('.'+opt.placeClass);
+          dragEl.css({
+            'left': e.pageX - mouse.offsetX,
+            'top': e.pageY - mouse.offsetY
+          });
+          // mouse position last events
+          mouse.lastX = mouse.nowX;
+          mouse.lastY = mouse.nowY;
+          // mouse position this events
+          mouse.nowX = e.pageX;
+          mouse.nowY = e.pageY;
+          // distance mouse moved between events
+          mouse.distX = mouse.nowX - mouse.lastX;
+          mouse.distY = mouse.nowY - mouse.lastY;
+          // direction mouse was moving
+          mouse.lastDirX = mouse.dirX;
+          mouse.lastDirY = mouse.dirY;
+          // direction mouse is now moving (on both axis)
+          mouse.dirX = mouse.distX === 0 ? 0 : mouse.distX > 0 ? 1 : -1;
+          mouse.dirY = mouse.distY === 0 ? 0 : mouse.distY > 0 ? 1 : -1;
+          // axis mouse is now moving on
+          var newAx = Math.abs(mouse.distX) > Math.abs(mouse.distY) ? 1 : 0;
+
+          // do nothing on first move
+          if (!mouse.moving) {
+            mouse.dirAx = newAx;
+            mouse.moving = true;
+            return;
+          }
+
+          // calc distance moved on this axis (and direction)
+          if (mouse.dirAx !== newAx) {
+          mouse.distAxX = 0;
+          mouse.distAxY = 0;
+          } else {
+          mouse.distAxX += Math.abs(mouse.distX);
+          if (mouse.dirX !== 0 && mouse.dirX !== mouse.lastDirX) {
+            mouse.distAxX = 0;
+          }
+          mouse.distAxY += Math.abs(mouse.distY);
+          if (mouse.dirY !== 0 && mouse.dirY !== mouse.lastDirY) {
+            mouse.distAxY = 0;
+          }
+          }
+          mouse.dirAx = newAx;
+          /*** move horizontal*/
+
+          if(mouse.dirAx && opt.threshold <= mouse.distAxX){
+            // reset move distance on x-axis for new phase
+              mouse.distAxX = 0;
+              prev = placeEl.prev(opt.itemNodeName);
+            //  debugger;
+              expand = prev.length ? this.includeInfo[prev.data('id')].nodeExpand : false;
+              // increase horizontal level if previous sibling exists and is not collapsed
+              if(mouse.distX > 0 && expand){
+                list = prev.find(opt.listNodeName).last();
+                if(!list.length){
+                  list = $('<' + opt.listNodeName + '/>').addClass(opt.listClass);
+                  list.append(placeEl);
+                  prev.append(list);
+                }else{
+                  // else append to next level up
+                  list = prev.children(opt.listNodeName).last();
+                  list.append(placeEl);
+                }
+              }
+              // decrease horizontal level
+            if (mouse.distX < 0) {
+              //debugger;
+              // we can't decrease a level if an item preceeds the current one
+              next = placeEl.next(opt.itemNodeName);
+              if (!next.length) {
+                placeEl.closest(opt.itemNodeName).after(placeEl);
+              }
+            }
+          }
+
+          /* move vertical*/
+          if(!mouse.dirAx){
+              var isEmpty = false;
+              // find list item under cursor
+
+              this.pointEl = $(document.elementFromPoint(e.pageX - document.body.scrollLeft, e.pageY - (window.pageYOffset || document.documentElement.scrollTop)));
+
+              if (this.pointEl.hasClass(opt.handleClass)) {
+                this.pointEl = this.pointEl.parent(opt.itemNodeName);
+              }
+              if (this.pointEl.hasClass(opt.emptyClass)) {
+                isEmpty = true;
+              } else if (!this.pointEl.length || !this.pointEl.hasClass(opt.itemClass)) {
+                return;
+              }
+              var before = e.pageY < (this.pointEl.offset().top + this.pointEl.height() / 2);
+              // if empty create new list to replace empty placeholder
+              if (isEmpty) {
+                list = $(document.createElement(opt.listNodeName)).addClass(opt.listClass);
+                list.append(placeEl);
+                this.pointEl.replaceWith(list);
+              } else if (before) {
+                this.pointEl.before(placeEl);
+              } else {
+                this.pointEl.after(placeEl);
+              }
+          }
+        }
+
+      }
+    },
+    dragStop: function(e){
+      e =  e.touches ? e.touches[0] : e;
+      //debugger;
+      var el,opt, target, newParent, oldParent, newParentId, targetId, oldParentId, newSort, oldSort, dragEl, placeEl, moveData, children;
+      if(this.dragEl){
+        console.log(this.treeDataNode);
+        opt = this.treeOptions;
+        placeEl= $('.'+opt.placeClass);
+        dragEl= $('.'+opt.dragClass);
+         el = dragEl.children(opt.itemNodeName).first();
+         // have bug
+         newSort = placeEl.prevAll(opt.itemNodeName).length;
+         newParentId =placeEl.closest('li').data('id');
+         targetId = el.data('id');
+         target = this.dataMap.get(targetId);
+         oldParentId = target[opt.parentKey];
+         newParent = this.dataMap.get(newParentId);
+         oldParent  = this.dataMap.get(oldParentId);
+         oldSort = target[opt.sortKey];
+         if(newParentId)
+           this.includeInfo[newParentId].nodeCL++;
+        if(oldParentId)
+           this.includeInfo[oldParentId].nodeCL--;
+        //debugger;
+        moveData =  {
+          parentchange: targetId +" : " + oldParentId + "=>" + newParentId,
+          sortChange: oldSort + "=>" + newSort
+         }
+         this.moveData.push(moveData);
+
+          el[0].parentNode.removeChild(el[0]);
+          placeEl.after(el);
+
+        this.newP = el.parent(opt.listNodeName);
+        children = this.oldP.children(opt.itemNodeName);
+//debugger;
+        for(var i = 0; i < children.length; i++){
+          let item = $(children[i]);
+          let tempId = item.data('id');
+          let tempObj = this.dataMap.get(tempId);
+          tempObj[opt.sortKey] = i;
+        }
+
+        children = this.newP.children(opt.itemNodeName);
+
+        for(var i = 0; i < children.length; i++){
+          let item = $(children[i]);
+          let tempId = item.data('id');
+          let tempObj = this.dataMap.get(tempId);
+          tempObj[opt.sortKey] = i;
+        }
+
+        target[opt.parentKey] = newParentId;
+
+         this.placeEl = false;
+         this.dragEl = false;
+
+         console.log("oldSort:" + oldSort + " newSort:" + newSort);
+    }
+  },
+    reset: function(){
+      this.mouse = {
+        offsetX: 0,
+        offsetY: 0,
+        startX: 0,
+        startY: 0,
+        lastX: 0,
+        lastY: 0,
+        nowX: 0,
+        nowY: 0,
+        distX: 0,
+        distY: 0,
+        dirAx: 0,
+        dirX: 0,
+        dirY: 0,
+        lastDirX: 0,
+        lastDirY: 0,
+        distAxX: 0,
+        distAxY: 0
+      };
+    this.isTouch = false;
+    this.moving = false;
+    this.dragEl = false,
+    this.placeEl = false,
+    this.dragRootEl = null;
+    this.dragDepth = 0;
+    this.hasNewRoot = false;
+    this.pointEl = null;
+    },
     handlecheckedChange(node) {
       this.store.changeCheckStatus(node)
     },
-    // getSelectedNodes () {
-    //   const allnodes = this.store.datas
-    //   let selectedNodes = []
-    //   for (let [, node] of allnodes) {
-    //     if (node.checked) {
-    //       selectedNodes.push(node)
-    //     }
-    //   }
-    //   return selectedNodes
-    // },
-    // getSelectedNodeIds () {
-    //   const allnodes = this.store.datas
-    //   let selectedNodeIds = []
-    //   for (let [, node] of allnodes) {
-    //     if (node.checked) {
-    //       selectedNodeIds.push(node.id)
-    //     }
-    //   }
-    //   return selectedNodeIds
-    // }
   },
   components: {
     TreeNode

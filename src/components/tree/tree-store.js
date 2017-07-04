@@ -1,8 +1,10 @@
 const pinyin = require('chinese-to-pinyin')
+import Vue from "vue"
 export default class TreeStore {
   constructor (data) {
 
     this.data=data.data instanceof Array ? data.data: [data.data];
+    //this.Cpy = this.data;
     this.options = {
       treeId: 'treeId-'+new Date().getTime(),
       listNodeName: 'ul',
@@ -29,6 +31,8 @@ export default class TreeStore {
     this.reset();
     this.$ = window.jQuery;
     this.moveHorizontal = 0;
+    this.render = true;
+
 
     this.hasPointerEvents = (function() {
       var el = document.createElement('div'),
@@ -259,11 +263,12 @@ export default class TreeStore {
                 // decrease horizontal level
               if (mouse.distX < 0) {
                 // we can't decrease a level if an item preceeds the current one
-                next = this.placeEl.next(opt.itemNodeName);
+                next = placeEl.next(opt.itemNodeName);
                 if (!next.length) {
-                  this.placeEl.closest(opt.itemNodeName).after(this.placeEl);
+                  debugger;
+                  placeEl.closest(opt.itemNodeName).after(this.placeEl);
                 }
-                this.moveHorizontal = -1;
+                //this.moveHorizontal = -1;
               }
 
 
@@ -330,6 +335,17 @@ export default class TreeStore {
          this.dataExclude[oldParentId].childrenLength--;
        }
        this.moveNode(newParentId, oldParentId, target);
+
+       this.render = false;
+       //this.data = null;
+       //this.render = true;
+       var that = this;
+       // I can't make vue  detect the dataStruction change so i render the component
+       setTimeout(function(){
+         that.render = true;
+       }, 0);
+       //this.render = true;
+
       //  if(this.moveHorizontal == -1 || this.moveHorizontal == 0){
       //    el[0].parentNode.removeChild(el[0]);
       //    this.placeEl.replaceWith(el);
@@ -339,14 +355,16 @@ export default class TreeStore {
       //    this.placeEl.remove();
       //    this.dragEl.remove();
       //  }
-      if(this.moveHorizontal == 0){
-           el[0].parentNode.removeChild(el[0]);
-           this.placeEl.replaceWith(el);
-           this.dragEl.remove();
-      }else{
-           this.placeEl.remove();
-           this.dragEl.remove();
-      }
+      // if(this.moveHorizontal == 0){
+      //      el[0].parentNode.removeChild(el[0]);
+      //      this.placeEl.replaceWith(el);
+      //      this.dragEl.remove();
+      // }else{
+      //      this.placeEl.remove();
+      //      this.dragEl.remove();
+      // }
+      this.placeEl.remove();
+      this.dragEl.remove();
        this.moveHorizontal = 0;
       this.reset();
       console.log(this.data);
@@ -354,16 +372,22 @@ export default class TreeStore {
   }
 
   moveNode(newParentId, oldParentId, target){
+    var children, arr = [], flag = 0;
+    console.log(newParentId + " " + oldParentId);
     if(newParentId != oldParentId){
       if(newParentId){
          var newParent = this.dataMap.get(newParentId);
+         flag = 1;
          if(!newParent.hasOwnProperty(this.options.childrenKey)){
            newParent[this.options.childrenKey] = [];
          }
-         newParent[this.options.childrenKey].push(target);
+         children = newParent[this.options.childrenKey];
+         children.push(target);
+
       }else{
          newParent = this.data;
          newParent.push(target);
+         children = newParent;
       }
       if(oldParentId){
        var oldParent = this.dataMap.get(oldParentId);
@@ -376,6 +400,28 @@ export default class TreeStore {
          });
       }
     }
+    var that = this;
+    if(!newParent){
+      newParent = this.dataMap.get(newParentId);
+      console.log(newParentId);
+      console.log(newParent);
+      children = newParent[this.options.childrenKey] || this.data;
+    }
+    children.forEach(function(item){
+      if(item[that.options.sortKey] < target[that.options.sortKey] || target.id == item.id)
+        arr[item[that.options.sortKey] ] = item;
+      if(target[that.options.sortKey] <= item[that.options.sortKey] && item.id != target.id){
+        arr[item[that.options.sortKey] + 1] = item;
+      }
+    });
+
+    if(!newParentId || !newParent)
+     this.data = arr;
+    else {
+      newParent[this.options.childrenKey] = arr;
+    }
+
+
   }
   isSupportJqueryDragElement(){
     var list = this;
