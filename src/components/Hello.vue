@@ -16,7 +16,8 @@
 </template>
 
 <script>
-import Tree from './tree/tree.vue'
+//import Tree from './tree/tree.vue'
+import Tree from 'vue-drag-sort-tree'
 export default {
   name: 'hello',
   data() {
