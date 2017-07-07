@@ -13,15 +13,14 @@
     </p>
   </div>
   <div class="vim-tree" :id="treeOptions.treeId" v-on:mousedown="dragStart" v-on:mousemove="dragMove" v-on:mouseup="dragStop">
-    <tree-node  :treeData='treeDataNode' :treeOptions="treeOptions" :includeInfo="includeInfo" @handlecheckedChange="handlecheckedChange"></tree-node>
+    <tree-node :treeData='treeDataNode' :treeOptions="treeOptions" :includeInfo="includeInfo" @handlecheckedChange="handlecheckedChange"></tree-node>
   </div>
-  <div v-show="placeEl" :class="treeOptions.placeClass"></div>
-  <ul v-show="dragEl" :class="[treeOptions.listClass , treeOptions.dragClass]"></ul>
+  <div v-show="placeEl" class="placeHolder" :class="treeOptions.placeClass"></div>
+  <ul v-show="dragEl" class="dragel" :class="[treeOptions.listClass , treeOptions.dragClass]"></ul>
   </div>
 </template>
 <script>
 import TreeNode from './tree-node.vue'
-//import TreeStore from './tree-store'
 import Vue from 'vue'
 export default {
   name: 'tree',
@@ -46,7 +45,6 @@ export default {
         treeId: 'treeId-'+new Date().getTime(),
         listNodeName: 'ul',
         itemNodeName: 'li',
-        rootClass: 'dd',
         listClass: 'vim-ul-default',
         itemClass: 'vim-li-default',
         dragClass: 'vim-dragel-default',
@@ -69,29 +67,7 @@ export default {
       },
     }
   },
-  // watch:{
-  //   moveData: {
-  //     handler: function(val, oldVal){
-  //       console.log(val);
-  //     },
-  //     deep: true
-  //   },
-  // updateAction: {
-  //   handler: function(val, oldVal){
-  //     var t = this.dataMap.get(val.t);
-  //     t[this.treeOptions.sortKey] = val.s;
-  //     t[this.treeOptions.parentKey] = val.p;
-  //     //console.log(this.dataMap.get(3));
-  //     //console.log(this.dataMap.get(4));
-  //   },
-  //   deep: true
-  // },
-  //   search: function(val) {
-  //     //this.store.filterNodes(val, this.options.search)
-  //   }
-  // },
   created() {
-
     for (let option in this.options) {
       if(this.options.hasOwnProperty(option))
         this.treeOptions[option] = this.options[option];
@@ -117,13 +93,19 @@ export default {
 
 
     this.reset();
-
-    //this.$watch('this.moveData', function (newValue, oldValue) { console.log(newValue); }, { deep: true });
   },
   mounted() {
 
   },
   methods: {
+    closest(el ,selector){
+      while(el){
+        if(el.matches(selector)){
+          return el;
+        }
+        el = el.parentElement;
+      }
+    },
     getFomatedData(){
       var res = [];
       var opt = this.treeOptions;
@@ -142,16 +124,17 @@ export default {
       return this.moveData;
     },
     dragStart: function(e){
-      var handle, mouse = this.mouse, target, dragItem, opt = this.treeOptions, placeEl, dragEl;
+      var handle, mouse = this.mouse, target = e.target, dragItem, opt = this.treeOptions, placeEl, dragEl;
+      mouse.offsetX = e.offsetX;
+      mouse.offsetY = e.offsetY;
+      mouse.startX = mouse.lastX = e.pageX;
+      mouse.startY = mouse.lastY = e.pageY;
+
       if(window.jQuery){
 
         // get mouse's offset
-        mouse.offsetX = e.offsetX !== undefined ? e.offsetX : e.pageX - target.offset().left;
-        mouse.offsetY = e.offsetY !== undefined ? e.offsetY : e.pageY - target.offset().top;
-        mouse.startX = mouse.lastX = e.pageX;
-        mouse.startY = mouse.lastY = e.pageY;
-
-        //$ = window.jQuery;
+        // mouse.offsetX = e.offsetX !== undefined ? e.offsetX : e.pageX - target.offset().left;
+        // mouse.offsetY = e.offsetY !== undefined ? e.offsetY : e.pageY - target.offset().top;
         handle = $(e.target);
         if (!handle.hasClass(opt.handleClass)) {
           if (handle.closest('.' + opt.noDragClass).length) {
@@ -169,12 +152,11 @@ export default {
 
         this.oldP = dragItem.parent(opt.listNodeName);
 
-        //debugger
-        //set the placeEl
         this.placeEl = true;
         placeEl = $('.'+opt.placeClass);
         placeEl.css('height', dragItem.height());
-        // set the dragEl
+
+
         this.dragEl = true;
         dragEl = $('.'+opt.dragClass);
         dragEl.children().remove();
@@ -184,15 +166,24 @@ export default {
         dragItem.after(placeEl);
         dragItem[0].parentNode.removeChild(dragItem[0]);
         dragItem.appendTo(dragEl);
-
-// debugger;
         dragEl.css({
           'left': e.pageX - mouse.offsetX,
           'top': e.pageY - mouse.offsetY
         });
+      }else{
+        if(!target.classList.contains(opt.handleClass)){
+          target = this.closest(target , '.' + opt.handleClass);
 
+          if (!target.length || this.dragEl) {
+            return;
+          }
+          e.preventDefault();
+          dragItem = this.closest(target , opt.itemNodeName);
 
+        }
       }
+
+
     },
     dragMove: function(e){
 
@@ -342,7 +333,7 @@ export default {
 
         this.newP = el.parent(opt.listNodeName);
         children = this.oldP.children(opt.itemNodeName);
-//debugger;
+
         for(var i = 0; i < children.length; i++){
           let item = $(children[i]);
           let tempId = item.data('id');
@@ -406,25 +397,65 @@ export default {
 }
 </script>
 
-<style>
-.vim-tree,
-.vim-tree ul {
+<style lang="scss">
+.vim-tree {
   margin: 1em 0 0 1em;
   padding: 0;
+  padding-bottom: 1px;
   list-style: none;
   color: #00d1b2;
   position: relative;
+  ul {
+    list-style: none;
+    margin: 1em 0 0 1em;
+    position: relative;
+  }
+  ul:before{
+    content: "";
+    display: block;
+    width: 0;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    border-left: 1px solid;
+  }
+  li{
+    margin: 1em 0 0;
+    padding: 0 0 0 1.5em;
+    line-height: 2em;
+    font-weight: bold;
+    position: relative;
+  }
+
+  li:before {
+    content: "";
+    display: block;
+    width: 10px;
+    height: 0;
+    border-top: 1px solid;
+    margin-top: -1px;
+    position: absolute;
+    top: 1em;
+    left: 0;
+  }
+
+  li>span.vim-tree-expand-collapse{
+    position: relative;
+    left: -27px;
+    top: 4px;
+    margin-right: -23px;
+    float: left;
+  }
+  li:last-child:before {
+    background: white;
+    height: auto;
+    top: 1em;
+    bottom: 0;
+  }
+
 }
-
-.vim-tree ul {
-  margin-left: 0.5em;
-}
-
-
-/* (indentation/2) */
-
-.vim-tree ul:before,
-.vim-tree:before {
+.vim-tree:before{
   content: "";
   display: block;
   width: 0;
@@ -435,120 +466,22 @@ export default {
   border-left: 1px solid;
 }
 
-.vim-tree li {
-  margin: 1em 0 0;
-  padding: 0 0 0 1.5em;
-  /* indentation + .5em */
-  line-height: 2em;
-  /* default list item's `line-height` */
-  font-weight: bold;
-  position: relative;
-}
-
-.vim-tree li:before {
-  content: "";
-  display: block;
-  width: 10px;
-  /* same with indentation */
-  height: 0;
-  border-top: 1px solid;
-  margin-top: -1px;
-  /* border top width */
-  position: absolute;
-  top: 1em;
-  /* (line-height/2) */
-  left: 0;
-}
-
-.vim-tree li:last-child:before {
-  background: white;
-  /* same with body background */
-  height: auto;
-  top: 1em;
-  /* (line-height/2) */
-  bottom: 0;
-}
-
-.vim-empty-default,
-.vim-li-default,
-.vim-placeholder-default {
-  position: relative;
-  margin: 0;
-  padding: 0;
-  min-height: 30px;
-  //  font-size: 13px;
-  line-height: 20px;
-  list-style: none;
-}
-
-.vim-li-default>span.vim-tree-expand-collapse {
-  position: relative;
-  left: -27px;
-  top: 4px;
-  margin-right: -23px;
-  float: left;
-}
-
-.vim-li-default>button {
-  display: block;
-  position: relative;
-  cursor: pointer;
-  float: left;
-  width: 25px;
-  height: 20px;
-  margin: 5px 0;
-  padding: 0;
-  text-indent: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  border: 0;
-  background: transparent;
-  font-size: 12px;
-  line-height: 1;
-  text-align: center;
-  font-weight: bold;
-  top: 5px;
-}
-
-.vim-li-default>button:before {
-  content: '+';
-  display: block;
-  position: absolute;
-  width: 100%;
-  text-align: center;
-  text-indent: 0;
-}
-
-.vim-li-default>button[data-action="collapse"]:before {
-  content: '-';
-}
-
-.vim-empty-default,
-.vim-placeholder-default {
+.placeHolder{
   margin: 5px 0;
   padding: 0;
   min-height: 30px;
   background: #f2fbff;
   border: 1px dashed #b6bcbf;
   box-sizing: border-box;
+  line-height: 20px;
+  list-style: none;
+  position: relative;
 }
 
-.vim-empty-default {
-  border: 1px dashed #bbb;
-  min-height: 100px;
-  background-color: #e5e5e5;
-  background-size: 60px 60px;
-  background-position: 0 0, 30px 30px;
-}
-
-.vim-handle-default {
-  min-width: 30px;
-  text-decoration: none;
-}
-
-.vim-dragel-default {
+.dragel{
   position: absolute;
   pointer-events: none;
   z-index: 999;
 }
+
 </style>

@@ -31,95 +31,6 @@ export default {
       showHide: []
     }
   },
-  // watch:{
-  //   moveData: {
-  //     handler: function(val, oldVal){
-  //       var oldP, newP, t, oldF = 0, newF = 0, opt = this.treeOptions, arr = [], oldSort, newSort, that = this;
-  //       if(val.status){
-  //     //    debugger;
-  //         oldP = val.oldParentId, newP = val.newParentId, t = this.dataMap.get(val.targetId), oldSort = val.oldSort, newSort = val.newSort;
-  //         this.nodeData.forEach(function(item, index){
-  //           if(item[opt.parentKey] == newP)
-  //             newF = 1;
-  //           if(item[opt.parentKey] == oldP)
-  //             oldF = 1;
-  //
-  //           if(item.id == newP && item[opt.childrenKey].length == 0 && opt.added == false ){
-  //             item[opt.childrenKey].push(t);
-  //             opt.added = true;
-  //           }
-  //
-  //           if(item.id == oldP && item[opt.childrenKey].length == 1){
-  //             item[opt.childrenKey] = [];
-  //             opt.removed = true;
-  //             debugger
-  //           }
-  //         });
-  //
-  //         //
-  //         // if(this.nodeData.length == 1 && this.nodeData[0].id == t.id && opt.removed == false){
-  //         //   debugger;
-  //         //   this.nodeData = null;
-  //         //   opt.removed = true;
-  //         // }
-  //
-  //
-  //       }
-  //       // newParent == oldParent
-  //       if(newF == 1 && oldF == 1){
-  //
-  //       }
-  //       if(newF ==1 && oldF == 0 && opt.added == false){
-  //         //debugger;
-  //         this.nodeData.forEach(function(item){
-  //            if(item[opt.sortKey] < newSort){
-  //              arr[item[opt.sortKey]] = item;
-  //            }
-  //            if(newSort <= item[opt.sortKey]){
-  //              arr[item[opt.sortKey] + 1] = item;
-  //              item[opt.sortKey]++;
-  //            }
-  //         });
-  //         arr[newSort] = t;
-  //         opt.added = true;
-  //       //  debugger;
-  //       }
-  //       if(newF == 0 && oldF == 1 && opt.removed == false){
-  //       //  debugger
-  //         this.nodeData.forEach(function(item){
-  //            if(item[opt.sortKey] < oldSort && item.id != t.id){
-  //              arr[item[opt.sortKey]] = item;
-  //            }
-  //            if(oldSort < item[opt.sortKey] && item.id != t.id){
-  //              arr[item[opt.sortKey] - 1] = item;
-  //              item[opt.sortKey]--;
-  //            }
-  //         });
-  //         opt.removed = true;
-  //       //  debugger;
-  //       }
-  //
-  //       if( (oldF || newF)){
-  //         debugger;
-  //         if(arr.length > 0){
-  //           this.nodeData = null;
-  //           this.nodeData = arr;
-  //           if(this.nodeData[0][opt.parentKey] == 3){
-  //             debugger;
-  //             console.log(this.nodeData);
-  //           }
-  //         }
-  //       }
-  //       if(opt.removed && opt.added){
-  //         this.updateAction.s = newSort;
-  //         this.updateAction.p = newP;
-  //         this.updateAction.t = t.id;
-  //       }
-  //       return ;
-  //     },
-  //     deep: true
-  //   }
-  // },
   computed: {
 
   },
@@ -137,7 +48,6 @@ export default {
         target = $(event.target).closest('li');
         target.children('ul').toggle();
       }
-
       this.showHide[id].nodeExpand = !this.includeInfo[id].nodeExpand;
     },
     handlecheckedChange(node) {

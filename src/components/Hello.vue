@@ -11,13 +11,12 @@
     </pre>
     <a class="button is-dark" @click="getMovement">get data clickMe</a>
   </div>
-
 </div>
 </template>
 
 <script>
-//import Tree from './tree/tree.vue'
-import Tree from 'vue-drag-sort-tree'
+import Tree from './tree/tree.vue'
+//import Tree from 'vue-drag-sort-tree'
 export default {
   name: 'hello',
   data() {
@@ -30,7 +29,7 @@ export default {
           useEnglish: false,
           customFilter: null
         },
-        injectComponent: "testItem",
+         injectComponent: "testItem",
         searchCls: "test-item-search-class",
       },
       treeData: [{
