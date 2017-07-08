@@ -1,5 +1,5 @@
 <template>
-<div class="vue-tree">
+<div class="vue-tree" :id="treeOptions.treeId">
   <div class="field has-addons" :class="treeOptions.searchCls" v-show="treeOptions.searchShow">
     <p class="control is-expanded">
       <input class="input" type="text" placeholder="search">
@@ -12,7 +12,7 @@
       </a>
     </p>
   </div>
-  <div class="vim-tree" :id="treeOptions.treeId" v-on:mousedown="dragStart" v-on:mousemove="dragMove" v-on:mouseup="dragStop">
+  <div class="vim-tree"  v-on:mousedown="dragStart" v-on:mousemove="dragMove" v-on:mouseup="dragStop">
     <tree-node :treeData='treeDataNode' :treeOptions="treeOptions" :includeInfo="includeInfo" @handlecheckedChange="handlecheckedChange"></tree-node>
   </div>
   <div v-show="placeEl" class="placeHolder" :class="treeOptions.placeClass"></div>
@@ -91,14 +91,23 @@ export default {
     this.treeDataNode = this.treeData;
 
 
-
     this.reset();
+
   },
   mounted() {
-
+    this.root = document.getElementById(this.treeOptions.treeId);
   },
   methods: {
     closest(el ,selector){
+      while(el){
+        if(el.matches(selector)){
+          return el;
+        }
+        el = el.parentElement;
+      }
+    },
+    parent(el, selector){
+      el = el.parentElement;
       while(el){
         if(el.matches(selector)){
           return el;
@@ -131,10 +140,6 @@ export default {
       mouse.startY = mouse.lastY = e.pageY;
 
       if(window.jQuery){
-
-        // get mouse's offset
-        // mouse.offsetX = e.offsetX !== undefined ? e.offsetX : e.pageX - target.offset().left;
-        // mouse.offsetY = e.offsetY !== undefined ? e.offsetY : e.pageY - target.offset().top;
         handle = $(e.target);
         if (!handle.hasClass(opt.handleClass)) {
           if (handle.closest('.' + opt.noDragClass).length) {
@@ -173,14 +178,31 @@ export default {
       }else{
         if(!target.classList.contains(opt.handleClass)){
           target = this.closest(target , '.' + opt.handleClass);
-
-          if (!target.length || this.dragEl) {
-            return;
-          }
-          e.preventDefault();
-          dragItem = this.closest(target , opt.itemNodeName);
-
         }
+        if (!target || this.dragEl) {
+          return;
+        }
+        e.preventDefault();
+
+        dragItem = this.closest(target , opt.itemNodeName);
+        this.oldP = this.parent(dragItem, opt.listNodeName);
+
+        this.placeEl = true;
+        [placeEl] = this.root.getElementsByClassName(opt.placeClass);
+        debugger;
+        placeEl.style.height = dragItem.offsetHeight + "px";
+
+        this.dragEl = true;
+        [dragEl] = this.root.getElementsByClassName(opt.dragClass);
+        dragEl.innerHTML = '';
+        dragEl.style.width = dragItem.offsetWidth + "px";
+
+        dragItem.parentNode.insertBefore(placeEl, dragItem);
+        dragItem.parentNode.removeChild(dragItem);
+        dragEl.appendChild(dragItem);
+
+        dragEl.style.left = (e.pageX - mouse.offsetX) + "px";
+        dragEl.style.top = (e.pageY - mouse.offsetY) + "px";
       }
 
 
