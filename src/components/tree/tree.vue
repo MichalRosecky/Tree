@@ -105,6 +105,7 @@ export default {
         }
         el = el.parentElement;
       }
+      return null;
     },
     parent(el, selector){
       el = el.parentElement;
@@ -114,6 +115,30 @@ export default {
         }
         el = el.parentElement;
       }
+      return null;
+    },
+    prev(el, selector){
+      //el = el.previousSibling;
+      el = el.previousElementSibling;
+      //debugger;
+      while(el){
+        if(el.matches(selector)){
+          return el;
+        }
+      el = el.previousElementSibling;
+      }
+      return null;
+    },
+    next(el, selector){
+      //el = el.nextSibling;
+      el = el.nextElementSibling;
+      while(el){
+        if(el.matches(selector)){
+          return el;
+        }
+        el = el.nextElementSibling;
+      }
+      return null;
     },
     getFomatedData(){
       var res = [];
@@ -160,10 +185,12 @@ export default {
         this.placeEl = true;
         placeEl = $('.'+opt.placeClass);
         placeEl.css('height', dragItem.height());
+        this.placeElObj = placeEl;
 
 
         this.dragEl = true;
         dragEl = $('.'+opt.dragClass);
+        this.dragElObj = dragEl;
         dragEl.children().remove();
         dragEl.css('width', dragItem.width());
 
@@ -189,7 +216,7 @@ export default {
 
         this.placeEl = true;
         [placeEl] = this.root.getElementsByClassName(opt.placeClass);
-        debugger;
+      //  debugger;
         placeEl.style.height = dragItem.offsetHeight + "px";
 
         this.dragEl = true;
@@ -203,121 +230,174 @@ export default {
 
         dragEl.style.left = (e.pageX - mouse.offsetX) + "px";
         dragEl.style.top = (e.pageY - mouse.offsetY) + "px";
+        this.placeElObj = placeEl;
+        this.dragElObj = dragEl;
       }
 
 
     },
-    dragMove: function(e){
+    setMouse: function(e){
+      var mouse = this.mouse;
+      // mouse position last events
+      mouse.lastX = mouse.nowX;
+      mouse.lastY = mouse.nowY;
+      // mouse position this events
+      mouse.nowX = e.pageX;
+      mouse.nowY = e.pageY;
+      // distance mouse moved between events
+      mouse.distX = mouse.nowX - mouse.lastX;
+      mouse.distY = mouse.nowY - mouse.lastY;
+      // direction mouse was moving
+      mouse.lastDirX = mouse.dirX;
+      mouse.lastDirY = mouse.dirY;
+      // direction mouse is now moving (on both axis)
+      mouse.dirX = mouse.distX === 0 ? 0 : mouse.distX > 0 ? 1 : -1;
+      mouse.dirY = mouse.distY === 0 ? 0 : mouse.distY > 0 ? 1 : -1;
+      // axis mouse is now moving on
+      var newAx = Math.abs(mouse.distX) > Math.abs(mouse.distY) ? 1 : 0;
 
-      var dragEl, placeEl, parent, prev, expand, next, opt , list, mouse ;
-      if(this.dragEl){
-        if(window.jQuery){
-          opt = this.treeOptions, mouse = this.mouse , dragEl= $('.'+opt.dragClass), placeEl= $('.'+opt.placeClass);
-          dragEl.css({
-            'left': e.pageX - mouse.offsetX,
-            'top': e.pageY - mouse.offsetY
-          });
-          // mouse position last events
-          mouse.lastX = mouse.nowX;
-          mouse.lastY = mouse.nowY;
-          // mouse position this events
-          mouse.nowX = e.pageX;
-          mouse.nowY = e.pageY;
-          // distance mouse moved between events
-          mouse.distX = mouse.nowX - mouse.lastX;
-          mouse.distY = mouse.nowY - mouse.lastY;
-          // direction mouse was moving
-          mouse.lastDirX = mouse.dirX;
-          mouse.lastDirY = mouse.dirY;
-          // direction mouse is now moving (on both axis)
-          mouse.dirX = mouse.distX === 0 ? 0 : mouse.distX > 0 ? 1 : -1;
-          mouse.dirY = mouse.distY === 0 ? 0 : mouse.distY > 0 ? 1 : -1;
-          // axis mouse is now moving on
-          var newAx = Math.abs(mouse.distX) > Math.abs(mouse.distY) ? 1 : 0;
+      // do nothing on first move
+      if (!mouse.moving) {
+        mouse.dirAx = newAx;
+        mouse.moving = true;
+        return;
+      }
 
-          // do nothing on first move
-          if (!mouse.moving) {
-            mouse.dirAx = newAx;
-            mouse.moving = true;
-            return;
-          }
-
-          // calc distance moved on this axis (and direction)
-          if (mouse.dirAx !== newAx) {
+      // calc distance moved on this axis (and direction)
+      if (mouse.dirAx !== newAx) {
+      mouse.distAxX = 0;
+      mouse.distAxY = 0;
+      } else {
+      mouse.distAxX += Math.abs(mouse.distX);
+      if (mouse.dirX !== 0 && mouse.dirX !== mouse.lastDirX) {
+        mouse.distAxX = 0;
+      }
+      mouse.distAxY += Math.abs(mouse.distY);
+      if (mouse.dirY !== 0 && mouse.dirY !== mouse.lastDirY) {
+        mouse.distAxY = 0;
+      }
+      }
+      mouse.dirAx = newAx;
+    },
+    moveHJquery: function(e){
+      var dragEl = this.dragElObj , placeEl = this.placeElObj, parent, prev, expand, next, opt = this.treeOptions , list, mouse = this.mouse;
+        // reset move distance on x-axis for new phase
           mouse.distAxX = 0;
-          mouse.distAxY = 0;
-          } else {
-          mouse.distAxX += Math.abs(mouse.distX);
-          if (mouse.dirX !== 0 && mouse.dirX !== mouse.lastDirX) {
-            mouse.distAxX = 0;
-          }
-          mouse.distAxY += Math.abs(mouse.distY);
-          if (mouse.dirY !== 0 && mouse.dirY !== mouse.lastDirY) {
-            mouse.distAxY = 0;
-          }
-          }
-          mouse.dirAx = newAx;
-          /*** move horizontal*/
-
-          if(mouse.dirAx && opt.threshold <= mouse.distAxX){
-            // reset move distance on x-axis for new phase
-              mouse.distAxX = 0;
-              prev = placeEl.prev(opt.itemNodeName);
-            //  debugger;
-              expand = prev.length ? this.includeInfo[prev.data('id')].nodeExpand : false;
-              // increase horizontal level if previous sibling exists and is not collapsed
-              if(mouse.distX > 0 && expand){
-                list = prev.find(opt.listNodeName).last();
-                if(!list.length){
-                  list = $('<' + opt.listNodeName + '/>').addClass(opt.listClass);
-                  list.append(placeEl);
-                  prev.append(list);
-                }else{
-                  // else append to next level up
-                  list = prev.children(opt.listNodeName).last();
-                  list.append(placeEl);
-                }
-              }
-              // decrease horizontal level
-            if (mouse.distX < 0) {
-              //debugger;
-              // we can't decrease a level if an item preceeds the current one
-              next = placeEl.next(opt.itemNodeName);
-              if (!next.length) {
-                placeEl.closest(opt.itemNodeName).after(placeEl);
-              }
+          prev = placeEl.prev(opt.itemNodeName);
+        //  debugger;
+          expand = prev.length ? this.includeInfo[prev.data('id')].nodeExpand : false;
+          // increase horizontal level if previous sibling exists and is not collapsed
+          if(mouse.distX > 0 && expand){
+            list = prev.find(opt.listNodeName).last();
+            if(!list.length){
+              list = $('<' + opt.listNodeName + '/>').addClass(opt.listClass);
+              list.append(placeEl);
+              prev.append(list);
+            }else{
+              // else append to next level up
+              list = prev.children(opt.listNodeName).last();
+              list.append(placeEl);
             }
           }
-
-          /* move vertical*/
-          if(!mouse.dirAx){
-              var isEmpty = false;
-              // find list item under cursor
-
-              this.pointEl = $(document.elementFromPoint(e.pageX - document.body.scrollLeft, e.pageY - (window.pageYOffset || document.documentElement.scrollTop)));
-
-              if (this.pointEl.hasClass(opt.handleClass)) {
-                this.pointEl = this.pointEl.parent(opt.itemNodeName);
-              }
-              if (this.pointEl.hasClass(opt.emptyClass)) {
-                isEmpty = true;
-              } else if (!this.pointEl.length || !this.pointEl.hasClass(opt.itemClass)) {
-                return;
-              }
-              var before = e.pageY < (this.pointEl.offset().top + this.pointEl.height() / 2);
-              // if empty create new list to replace empty placeholder
-              if (isEmpty) {
-                list = $(document.createElement(opt.listNodeName)).addClass(opt.listClass);
-                list.append(placeEl);
-                this.pointEl.replaceWith(list);
-              } else if (before) {
-                this.pointEl.before(placeEl);
-              } else {
-                this.pointEl.after(placeEl);
-              }
+          // decrease horizontal level
+        if (mouse.distX < 0) {
+          //debugger;
+          // we can't decrease a level if an item preceeds the current one
+          next = placeEl.next(opt.itemNodeName);
+          if (!next.length && placeEl.closest(opt.itemNodeName)) {
+            placeEl.closest(opt.itemNodeName).after(placeEl);
           }
         }
 
+
+    },
+    moveH: function(e){
+        var dragEl = this.dragElObj , placeEl = this.placeElObj, parent, prev, expand, next, opt = this.treeOptions , list, mouse = this.mouse;
+          // reset move distance on x-axis for new phase
+          mouse.distAxX = 0;
+          prev = this.prev(placeEl, opt.itemNodeName);
+          expand = prev ? this.includeInfo[prev.dataset.id].nodeExpand : false;
+          if(mouse.distX > 0 && expand){
+            list = prev.querySelectorAll(opt.itemNodeName);
+            if(!list.length){
+              list = document.createElement(opt.listNodeName);
+              list.className = opt.listClass;
+              list.appendChild(placeEl);
+              prev.appendChild(list);
+            }else{
+              list = list[list.length - 1];
+              list.appendChild(placeEl);
+            }
+          }
+          if(mouse.distX < 0){
+            next = this.next(placeEl, opt.itemNodeName);
+            parent = this.closest(placeEl, opt.itemNodeName);
+            if(!next && parent){
+              // have bug
+              if(!parent)
+                debugger;
+              parent.parentElement.insertBefore(placeEl, parent.nextSibling);
+            }
+
+          }
+    },
+    moveVJquery: function(e){
+      var dragEl = this.dragElObj , placeEl = this.placeElObj, parent, prev, expand, next, opt = this.treeOptions , list, mouse = this.mouse;
+      // find list item under cursor
+
+      this.pointEl = $(document.elementFromPoint(e.pageX - document.body.scrollLeft, e.pageY - (window.pageYOffset || document.documentElement.scrollTop)));
+
+      if (this.pointEl.hasClass(opt.handleClass)) {
+        this.pointEl = this.pointEl.parent(opt.itemNodeName);
+      }
+      if (this.pointEl.hasClass(opt.emptyClass)) {
+        isEmpty = true;
+      } else if (!this.pointEl.length || !this.pointEl.hasClass(opt.itemClass)) {
+        return;
+      }
+      var before = e.pageY < (this.pointEl.offset().top + this.pointEl.height() / 2);
+      // if empty create new list to replace empty placeholder
+      if (isEmpty) {
+        list = $(document.createElement(opt.listNodeName)).addClass(opt.listClass);
+        list.append(placeEl);
+        this.pointEl.replaceWith(list);
+      } else if (before) {
+        this.pointEl.before(placeEl);
+      } else {
+        this.pointEl.after(placeEl);
+      }
+    },
+    moveV: function(e){
+        var dragEl = this.dragElObj , placeEl = this.placeElObj, parent, prev, expand, next, opt = this.treeOptions , list, mouse = this.mouse;
+        this.pointEl = document.elementFromPoint(e.pageX - document.body.scrollLeft, e.pageY - (window.pageYOffset || document.documentElement.scrollTop));
+        if(this.pointEl.classList.contains(opt.handleClass)){
+          this.pointEl = this.parent(this.pointEl , opt.itemNodeName);
+        }
+        if(!this.pointEl || !this.pointEl.classList.contains(opt.itemClass)) return;
+      //  debugger;
+        var before = e.offsetY < (this.pointEl.offsetHeight / 2);
+        if(before){
+          this.pointEl.parentElement.insertBefore(placeEl, this.pointEl);
+        }else{
+          this.pointEl.parentElement.insertBefore(placeEl, this.pointEl.nextSibling);
+        }
+    },
+    dragMove: function(e){
+
+      var dragEl = this.dragElObj, opt = this.treeOptions, mouse = this.mouse, left = e.pageX - mouse.offsetX, top = e.pageY - mouse.offsetY ;
+      if(this.dragEl){
+        this.setMouse(e);
+        window.jQuery ? dragEl.css({'left': left, 'top': top}) : (dragEl.style.left = `${left}px` , dragEl.style.top=`${top}px`);
+          /*** move horizontal*/
+          if(mouse.dirAx && opt.threshold <= mouse.distAxX){
+            // reset move distance on x-axis for new phase
+             window.jQuery ? this.moveHJquery(e) : this.moveH(e);
+          }
+          /* move vertical*/
+          if(!mouse.dirAx){
+              var isEmpty = false;
+               window.jQuery ? this.moveVJquery(e): this.moveV(e);
+          }
       }
     },
     dragStop: function(e){
@@ -325,12 +405,12 @@ export default {
       //debugger;
       var el,opt, target, newParent, oldParent, newParentId, targetId, oldParentId, newSort, oldSort, dragEl, placeEl, moveData, children;
       if(this.dragEl){
-        console.log(this.treeDataNode);
+
         opt = this.treeOptions;
         placeEl= $('.'+opt.placeClass);
         dragEl= $('.'+opt.dragClass);
          el = dragEl.children(opt.itemNodeName).first();
-         // have bug
+
          newSort = placeEl.prevAll(opt.itemNodeName).length;
          newParentId =placeEl.closest('li').data('id');
          targetId = el.data('id');
@@ -344,11 +424,11 @@ export default {
         if(oldParentId)
            this.includeInfo[oldParentId].nodeCL--;
         //debugger;
-        moveData =  {
-          parentchange: targetId +" : " + oldParentId + "=>" + newParentId,
-          sortChange: oldSort + "=>" + newSort
-         }
-         this.moveData.push(moveData);
+        // moveData =  {
+        //   parentchange: targetId +" : " + oldParentId + "=>" + newParentId,
+        //   sortChange: oldSort + "=>" + newSort
+        //  }
+        //  this.moveData.push(moveData);
 
           el[0].parentNode.removeChild(el[0]);
           placeEl.after(el);
