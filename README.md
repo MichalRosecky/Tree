@@ -44,7 +44,7 @@ export default {
       data() {
         return {
          options: {
-            injectComponent: "defaultTemplate", // you can custom the content of the tree item
+            injectComponent: "", // you can custom the content of the tree item, if it empty , component will use default.
             sortKey: 'order',                   
             parentKey: 'parentId',
             searchKey: 'label',
@@ -56,13 +56,7 @@ export default {
               label: 'id: 1',
               order: 0,
               parentId: null,
-            children: [{
-                id: 2,
-                order: 0,
-                label: 'id: 2',
-                parentId: 1,
-                children: []
-               }]
+              children: []
            }
           ]
     },
@@ -71,30 +65,7 @@ export default {
       this.formated = this.$refs.tree.getFomatedData();
     }
   }
- }
- 
- // defaultTemplate.vue
- <template>
-<div class="card">
-  <header class="card-header">
-    <p class="card-header-title" :class="opt.handleClass" > {{data[opt.searchKey]}}</p>
-    <a class="card-header-icon" @click="visible= !visible"></a>
-  </header>
-  <div class="card-content" v-show="visible"><span>content</span></div>
-</div>
-</template>
-<script>
-export default {
-  name: "defaultTemplate",
-  props: ['data', 'opt'],
-  data() {
-    return {
-      visible: false,
-    }
-  },
-}
-</script>
-// you can write your custom component like above.  
+ } 
 ```
  ## Contact me
  vimmingshe@gmail.com
