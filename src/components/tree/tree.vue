@@ -34,12 +34,6 @@ export default {
       treeDataNode: [],
       dragEl: false,
       placeEl: false,
-      moveData: [],
-      updateAction: {
-        s: "",
-        p: "",
-        t: ""
-      },
       includeInfo: [],
       treeOptions: {
         treeId: 'treeId-'+new Date().getTime(),
@@ -54,16 +48,12 @@ export default {
         emptyClass: 'vim-empty-default',
         sortKey: 'sort',
         parentKey: 'parentId',
-        searchKey: 'name',
+        searchKey: 'label',
         childrenKey: "children",
         searchCls: '',
         searchShow: false,
         injectComponent: "",
-        group: 0,
-        maxDepth: 5,
         threshold: 20,
-        removed: false,
-        added: false
       },
     }
   },
@@ -216,7 +206,7 @@ export default {
 
         this.placeEl = true;
         [placeEl] = this.root.getElementsByClassName(opt.placeClass);
-      //  debugger;
+
         placeEl.style.height = dragItem.offsetHeight + "px";
 
         this.dragEl = true;
@@ -403,61 +393,64 @@ export default {
     dragStop: function(e){
       e =  e.touches ? e.touches[0] : e;
       //debugger;
-      var el,opt, target, newParent, oldParent, newParentId, targetId, oldParentId, newSort, oldSort, dragEl, placeEl, moveData, children;
+      var el,opt, target, newParent, oldParent, newParentId, targetId, oldParentId, newSort, oldSort, dragEl, placeEl, children;
       if(this.dragEl){
-
+      //debugger;
         opt = this.treeOptions;
-        placeEl= $('.'+opt.placeClass);
-        dragEl= $('.'+opt.dragClass);
-         el = dragEl.children(opt.itemNodeName).first();
+        placeEl= this.placeElObj;
+        dragEl=  this.dragElObj;
+         el = window.jQuery ? dragEl.children(opt.itemNodeName).first() : dragEl.querySelector(opt.itemNodeName);
 
-         newSort = placeEl.prevAll(opt.itemNodeName).length;
-         newParentId =placeEl.closest('li').data('id');
-         targetId = el.data('id');
+         //newSort = window.jQuery ? placeEl.prevAll(opt.itemNodeName).length : this.prevL(placeEl, opt.itemNodeName);
+         newParentId =window.jQuery ? placeEl.closest('li').data('id') : (this.closest(placeEl, opt.itemNodeName) ? this.closest(placeEl, opt.itemNodeName).dataset.id : 0);
+         targetId = window.jQuery ? el.data('id'): el.dataset.id;
+         newParentId = parseInt(newParentId);
+         targetId = parseInt(targetId);
          target = this.dataMap.get(targetId);
-         oldParentId = target[opt.parentKey];
-         newParent = this.dataMap.get(newParentId);
-         oldParent  = this.dataMap.get(oldParentId);
-         oldSort = target[opt.sortKey];
+         oldParentId = parseInt(target[opt.parentKey]);
+         //newParent = this.dataMap.get(newParentId);
+         //oldParent  = this.dataMap.get(oldParentId);
+         //oldSort = target[opt.sortKey];
          if(newParentId)
            this.includeInfo[newParentId].nodeCL++;
         if(oldParentId)
            this.includeInfo[oldParentId].nodeCL--;
-        //debugger;
-        // moveData =  {
-        //   parentchange: targetId +" : " + oldParentId + "=>" + newParentId,
-        //   sortChange: oldSort + "=>" + newSort
-        //  }
-        //  this.moveData.push(moveData);
 
-          el[0].parentNode.removeChild(el[0]);
-          placeEl.after(el);
+          window.jQuery ? el[0].parentNode.removeChild(el[0]) : el.parentNode.removeChild(el);
+          window.jQuery ? placeEl.after(el) : placeEl.parentElement.insertBefore(el, placeEl);
 
-        this.newP = el.parent(opt.listNodeName);
-        children = this.oldP.children(opt.itemNodeName);
+        this.newP = window.jQuery ? el.parent(opt.listNodeName) : this.parent(el, opt.listNodeName);
+        children = window.jQuery ? this.oldP.children(opt.itemNodeName) : this.oldP.childNodes;
 
-        for(var i = 0; i < children.length; i++){
-          let item = $(children[i]);
-          let tempId = item.data('id');
-          let tempObj = this.dataMap.get(tempId);
-          tempObj[opt.sortKey] = i;
-        }
+        this.setSort(children, opt);
 
-        children = this.newP.children(opt.itemNodeName);
+        children = window.jQuery ? this.newP.children(opt.itemNodeName) : this.newP.childNodes;
 
-        for(var i = 0; i < children.length; i++){
-          let item = $(children[i]);
-          let tempId = item.data('id');
-          let tempObj = this.dataMap.get(tempId);
-          tempObj[opt.sortKey] = i;
-        }
+        this.setSort(children, opt);
 
         target[opt.parentKey] = newParentId;
 
          this.placeEl = false;
          this.dragEl = false;
 
-         console.log("oldSort:" + oldSort + " newSort:" + newSort);
+        // console.log("oldSort:" + oldSort + " newSort:" + newSort);
+    }
+  },
+  setSort(children, opt){
+    for(var i = 0, j = 0; i < children.length; i++){
+      let item, tempId, tempObj;
+      if(window.jQuery){
+        item = $(children[i]);
+        tempId = item.data('id');
+      }else{
+          if(children[i].matches(opt.itemNodeName)) tempId = children[i].dataset.id;
+          else
+            continue;
+      }
+      tempId = parseInt(tempId);
+      tempObj = this.dataMap.get(tempId);
+      debugger;
+      tempObj[opt.sortKey] = j++;
     }
   },
     reset: function(){

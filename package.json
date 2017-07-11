@@ -7,13 +7,14 @@
   "scripts": {
     "dev": "node build/dev-server.js",
     "start": "node build/dev-server.js",
-    "build": "node build/build.js"
+    "build": "node build/build.js",
+    "buildPack": "webpack --config ./build/webpack.buildComponent.conf.js"
   },
   "dependencies": {
     "bulma": "^0.4.2",
     "chinese-to-pinyin": "^0.1.6",
     "vue": "^2.3.3",
-    "vue-drag-sort-tree": "^1.2.1",
+    "vue-drag-sort-tree": "^1.2.2",
     "vue-router": "^2.3.1"
   },
   "devDependencies": {

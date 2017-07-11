@@ -2,12 +2,12 @@
 <div class="card">
   <header class="card-header">
     <a class="card-header-icon">
-      <span class="icon vim-handle-default is-small">
+      <span class="icon is-small" :class="opt.handleClass">
         <i class="fa fa-hand-o-down" title="拖拽排序"></i>
       </span>
     </a>
     <p class="card-header-title">
-      {{data.label}}
+      {{data[opt.searchKey]}}
     </p>
     <a class="card-header-icon" @click="visible= !visible">
       <span class="icon">
@@ -18,13 +18,10 @@
   <div class="card-content" v-show="visible">
     <div class="content">
       <div class="field is-horizontal">
-        <div class="field-label is-normal">
-          <label class="label">title</label>
-        </div>
         <div class="field-body">
           <div class="field is-grouped">
             <p class="control is-expanded has-icons-left">
-              <input class="input" type="text" placeholder="title" v-model="data.label">
+              <span>content</span>
             </p>
           </div>
         </div>
@@ -41,30 +38,12 @@ export default {
     // VbSwitch
   },
   name: "testItem",
-  props: ['data'],
+  props: ['data', 'opt'],
   data() {
     return {
       visible: false,
     }
   },
-  computed: {
-    status: {
-      set() {
-        this.data.status = this.data.status ? 0 : 1;
-        //  console.log(this.data.status);
-      },
-      get() {
-        if (parseInt(this.data.status)) {
-          return true;
-        } else {
-          return false;
-        }
-      }
-    }
-  },
-  mounted() {
-
-  }
 }
 </script>
 

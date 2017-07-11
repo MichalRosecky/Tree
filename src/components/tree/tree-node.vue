@@ -5,7 +5,7 @@
     <span class="icon vim-tree-expand-collapse" v-if="showHide[item.id].nodeCL > 0" @click.stop='handleNodeExpand(item.id)'>
       <i :class="showHide[item.id].nodeExpand ? 'fa fa-plus-square-o' : 'fa fa-minus-square-o' "></i>
     </span>
-    <component v-if="treeOptions.injectComponent" :is="treeOptions.injectComponent" :data="item">
+    <component :is="treeOptions.injectComponent ? treeOptions.injectComponent : 'default-Template' " :data="item" :opt="treeOptions">
     </component>
     <tree-node v-if="item[treeOptions.childrenKey].length > 0" :includeInfo="includeInfo" :treeData="item[treeOptions.childrenKey]"  :treeOptions="treeOptions">
     </tree-node>
@@ -14,7 +14,11 @@
 </template>
 
 <script>
+import defaultTemplate from './defaultTemplate';
 export default {
+  components: {
+    defaultTemplate
+  },
   name: 'treeNode',
   props: {
     treeData: [Array],
@@ -40,6 +44,15 @@ export default {
     this.showHide = (this.includeInfo || []).slice(0);
   },
   methods: {
+    closest(el ,selector){
+      while(el){
+        if(el.matches(selector)){
+          return el;
+        }
+        el = el.parentElement;
+      }
+      return null;
+    },
     handleNodeExpand(id) {
       //this.nodeDataExclude[id].expand = !this.nodeDataExclude[id].expand;
       debugger;
@@ -47,6 +60,8 @@ export default {
       if(window.jQuery){
         target = $(event.target).closest('li');
         target.children('ul').toggle();
+      }else{
+        this.closest(event.target, 'li').querySelector('ul').style.display = !this.showHide[id].nodeExpand ? "block" : "none";
       }
       this.showHide[id].nodeExpand = !this.includeInfo[id].nodeExpand;
     },
