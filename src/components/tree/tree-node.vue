@@ -54,15 +54,8 @@ export default {
       return null;
     },
     handleNodeExpand(id) {
-      //this.nodeDataExclude[id].expand = !this.nodeDataExclude[id].expand;
-      debugger;
       var target;
-      if(window.jQuery){
-        target = $(event.target).closest('li');
-        target.children('ul').toggle();
-      }else{
-        this.closest(event.target, 'li').querySelector('ul').style.display = !this.showHide[id].nodeExpand ? "block" : "none";
-      }
+      this.closest(event.target, 'li').querySelector('ul').style.display = !this.showHide[id].nodeExpand ? "block" : "none";
       this.showHide[id].nodeExpand = !this.includeInfo[id].nodeExpand;
     },
     handlecheckedChange(node) {

@@ -1,9 +1,9 @@
 <template>
 <div class="hello">
   <div class="tree">
-    <tree ref='tree' :treeData="treeData" :options="options"/>
+    <tree ref='tree' :treeData="treeData" :options="options" />
   </div>
-    <div class="display">
+  <div class="display">
     <pre>
       <p v-for="item in formated">
         <span>id: {{item.id}} , </span><span> label: {{item.label}}  , </span><span> sort: {{item.sort}} , </span><span> parentId: {{item.parentId}} </span>
@@ -15,8 +15,7 @@
 </template>
 
 <script>
-//import Tree from './tree/tree.vue'
-import Tree from 'vue-drag-sort-tree'
+import Tree from '../../dist/index.js'
 export default {
   name: 'hello',
   data() {
@@ -29,7 +28,7 @@ export default {
           useEnglish: false,
           customFilter: null
         },
-        injectComponent: "defaultTemplate",
+        injectComponent: "",
         searchCls: "test-item-search-class",
       },
       treeData: [{
@@ -113,7 +112,7 @@ export default {
     Tree
   },
   methods: {
-    getMovement(){
+    getMovement() {
       this.formated = this.$refs.tree.getFomatedData();
     }
   }
@@ -123,18 +122,20 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
 .hello {
- display: flex;
- justify-content: space-around;
+  display: flex;
+  justify-content: space-around;
 }
-.tree{
-  min-width: 30vw;
 
+.tree {
+  min-width: 30vw;
 }
-.display{
+
+.display {
   min-width: 30vw;
   margin-top: 20px;
 }
-.test-item-search-class{
+
+.test-item-search-class {
   justify-content: center;
 }
 </style>

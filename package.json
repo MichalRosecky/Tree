@@ -1,8 +1,15 @@
 {
-  "name": "tree",
-  "version": "1.0.0",
-  "description": "A Vue.js project",
-  "author": "VimMing",
+  "name": "vue-drag-sort-tree",
+  "version": "1.2.4",
+  "description": "基于vue2拖拽树",
+  "main": "dist/index.js",
+  "keywords": [
+    "tree",
+    "sort",
+    "vue",
+    "drag"
+  ],
+  "author": "VimMingSHE@gmail.com",
   "private": false,
   "scripts": {
     "dev": "node build/dev-server.js",
@@ -11,11 +18,6 @@
     "buildPack": "webpack --config ./build/webpack.buildComponent.conf.js"
   },
   "dependencies": {
-    "bulma": "^0.4.2",
-    "chinese-to-pinyin": "^0.1.6",
-    "vue": "^2.3.3",
-    "vue-drag-sort-tree": "^1.2.2",
-    "vue-router": "^2.3.1"
   },
   "devDependencies": {
     "autoprefixer": "^6.7.2",
