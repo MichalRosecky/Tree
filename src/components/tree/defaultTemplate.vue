@@ -32,7 +32,6 @@
 </template>
 
 <script>
-// import VbSwitch from 'vue-bulma-switch'
 export default {
   components: {
     // VbSwitch
@@ -49,8 +48,8 @@ export default {
 
 <style scoped>
 .card {
-    p {
-        margin: 0;
-    }
+  p {
+    margin: 0;
+  }
 }
 </style>

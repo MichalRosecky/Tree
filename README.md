@@ -1,4 +1,4 @@
-# tree
+# tree [github](https://github.com/VimMing/Tree) [npm](https://www.npmjs.com/package/vue-drag-sort-tree)
 
 > A Vue.js component
 
@@ -65,11 +65,9 @@ export default {
       this.formated = this.$refs.tree.getFomatedData();
     }
   }
- } 
+ }
 ```
  ## Contact me
  vimmingshe@gmail.com
 
 [1]:https://github.com/VimMing/Tree/blob/master/demonstration.gif
-
-
