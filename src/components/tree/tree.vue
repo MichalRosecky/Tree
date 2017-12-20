@@ -1,27 +1,22 @@
 <template>
-<div class="vue-tree" :id="treeOptions.treeId">
-  <div class="field has-addons" :class="treeOptions.searchCls" v-show="treeOptions.searchShow">
-    <p class="control is-expanded">
-      <input class="input" type="text" placeholder="search">
-    </p>
-    <p class="control">
-      <a class="button is-success">
-        <span class="icon">
-          <i class="fa fa-search"></i>
-        </span>
-      </a>
-    </p>
-  </div>
+<div :id="treeOptions.treeId">
+
   <div class="vim-tree" v-on:mousedown="dragStart" v-on:mousemove="dragMove" v-on:mouseup="dragStop">
-    <tree-node :treeData='treeDataNode' :treeOptions="treeOptions" :includeInfo="includeInfo" @handlecheckedChange="handlecheckedChange"></tree-node>
+    <tree-node :treeData='treeDataNode' :treeOptions="treeOptions" :includeInfo="includeInfo"></tree-node>
   </div>
-  <div v-show="placeEl" class="placeHolder" :class="treeOptions.placeClass"></div>
-  <ul v-show="dragEl" class="dragel" :class="[treeOptions.listClass , treeOptions.dragClass]"></ul>
+
+  <div v-show="placeEl" class="placeHolder"></div>
+  <ul v-show="dragEl" class="dragEl"></ul>
+
 </div>
 </template>
+
 <script>
-import TreeNode from './tree-node.vue'
-export default {
+
+  import TreeNode from './tree-node.vue'
+  import {nextNode, prevNode, parentNode, closestNode} from './util'
+
+  export default {
   name: 'tree',
   props: {
     treeData: [Array],
@@ -29,53 +24,40 @@ export default {
   },
   data() {
     return {
-      search: null,
       treeDataNode: [],
       dragEl: false,
       placeEl: false,
       includeInfo: [],
       treeOptions: {
         treeId: 'treeId-' + new Date().getTime(),
-        listNodeName: 'ul',
-        itemNodeName: 'li',
-        listClass: 'vim-ul-default',
-        itemClass: 'vim-li-default',
-        dragClass: 'vim-dragel-default',
-        handleClass: 'vim-handle-default',
-        placeClass: 'vim-placeholder-default',
-        noDragClass: 'dd-nodrag',
-        emptyClass: 'vim-empty-default',
+        handleClass: 'handle',
         sortKey: 'sort',
         parentKey: 'parentId',
-        searchKey: 'label',
         childrenKey: "children",
-        searchCls: '',
-        searchShow: false,
-        injectComponent: "",
-        threshold: 20,
+        threshold: 5,
       },
     }
   },
   created() {
-    for (let option in this.options) {
-      if (this.options.hasOwnProperty(option))
-        this.treeOptions[option] = this.options[option];
-    }
+    Object.assign(this.treeOptions, this.options);
 
     this.dataMap = new Map();
     const _traverseNodes = (root) => {
       let i = 0;
       for (let node of root) {
         this.dataMap.set(node.id, node);
-        this.includeInfo[node.id] = {};
-        this.includeInfo[node.id].nodeVisible = true;
-        this.includeInfo[node.id].nodeExpand = true;
-        this.includeInfo[node.id].nodeCL = node.children.length;
+
+        this.includeInfo[node.id] = {
+          "nodeVisible": true,
+          "nodeExpand": true,
+          "nodeCL": node.children.length
+        };
         node[this.treeOptions.sortKey] = i++;
         if (node.children && node.children.length > 0) _traverseNodes(node.children)
       }
     }
     this.treeData = this.treeData instanceof Array ? this.treeData : [this.treeData];
+
     _traverseNodes(this.treeData);
     this.treeDataNode = this.treeData;
 
@@ -86,58 +68,18 @@ export default {
   mounted() {
     let opt = this.treeOptions;
     this.root = document.getElementById(this.treeOptions.treeId);
-    [this.dragElObj] = this.root.getElementsByClassName(opt.dragClass);
-    [this.placeElObj] = this.root.getElementsByClassName(opt.placeClass);
+    [this.dragElObj] = this.root.getElementsByClassName("dragEl");
+    [this.placeElObj] = this.root.getElementsByClassName("placeHolder");
     document.body.appendChild(this.dragElObj);
   },
+
   methods: {
-    closest(el, selector) {
-      while (el) {
-        if (el.matches(selector)) {
-          return el;
-        }
-        el = el.parentElement;
-      }
-      return null;
-    },
-    parent(el, selector) {
-      el = el.parentElement;
-      while (el) {
-        if (el.matches(selector)) {
-          return el;
-        }
-        el = el.parentElement;
-      }
-      return null;
-    },
-    prev(el, selector) {
-      //el = el.previousSibling;
-      el = el.previousElementSibling;
-      while (el) {
-        if (el.matches(selector)) {
-          return el;
-        }
-        el = el.previousElementSibling;
-      }
-      return null;
-    },
-    next(el, selector) {
-      //el = el.nextSibling;
-      el = el.nextElementSibling;
-      while (el) {
-        if (el.matches(selector)) {
-          return el;
-        }
-        el = el.nextElementSibling;
-      }
-      return null;
-    },
-    getFomatedData() {
+    reformatData() {
       var res = [];
       var opt = this.treeOptions;
       this.dataMap.forEach(function(item) {
-        var temp = {};
-        for (var key in item) {
+        let temp = {};
+        for (let key in item) {
           if (key != opt.childrenKey) {
             temp[key] = item[key];
           }
@@ -146,11 +88,9 @@ export default {
       });
       return res;
     },
-    userOperation() {
-      return this.moveData;
-    },
+
     dragStart: function(e) {
-      var handle, mouse = this.mouse,
+      var mouse = this.mouse,
         target = e.target,
         dragItem, opt = this.treeOptions,
         placeEl, dragEl;
@@ -160,15 +100,15 @@ export default {
       mouse.startY = mouse.lastY = e.pageY;
 
       if (!target.classList.contains(opt.handleClass)) {
-        target = this.closest(target, '.' + opt.handleClass);
+        target = closestNode(target, '.' + opt.handleClass);
       }
       if (!target || this.dragEl) {
         return;
       }
       e.preventDefault();
 
-      dragItem = this.closest(target, opt.itemNodeName);
-      this.oldP = this.parent(dragItem, opt.listNodeName);
+      dragItem = closestNode(target, "li");
+      this.oldP = parentNode(dragItem, "ul");
 
       this.placeEl = true;
       placeEl = this.placeElObj;
@@ -186,6 +126,7 @@ export default {
 
       dragEl.style.left = (e.pageX - mouse.offsetX) + "px";
       dragEl.style.top = (e.pageY - mouse.offsetY) + "px";
+
     },
     setMouse: function(e) {
       var mouse = this.mouse;
@@ -231,20 +172,17 @@ export default {
       mouse.dirAx = newAx;
     },
     moveH: function(e) {
-      var dragEl = this.dragElObj,
-        placeEl = this.placeElObj,
-        parent, prev, expand, next, opt = this.treeOptions,
+      let placeEl = this.placeElObj, parent, prev, expand, next, opt = this.treeOptions,
         list, mouse = this.mouse;
       // reset move distance on x-axis for new phase
       mouse.distAxX = 0;
-      prev = this.prev(placeEl, opt.itemNodeName);
+
+      prev = prevNode(placeEl, "li");
       expand = prev ? this.includeInfo[prev.dataset.id].nodeExpand : false;
       if (mouse.distX > 0 && expand) {
-        list = prev.querySelectorAll(opt.itemNodeName);
-        if (!list.length) {
-          list = document.createElement(opt.listNodeName);
-          list.className = opt.listClass;
-          list.appendChild(placeEl);
+        list = prev.querySelectorAll("ul");
+        if (list.length === 0) {
+          list = document.createElement("ul").appendChild(placeEl);
           prev.appendChild(list);
         } else {
           list = list[list.length - 1];
@@ -252,8 +190,8 @@ export default {
         }
       }
       if (mouse.distX < 0) {
-        next = this.next(placeEl, opt.itemNodeName);
-        parent = this.closest(placeEl, opt.itemNodeName);
+        next = nextNode(placeEl, "li");
+        parent = closestNode(placeEl, "li");
         if (!next && parent) {
           parent.parentElement.insertBefore(placeEl, parent.nextSibling);
         }
@@ -261,20 +199,19 @@ export default {
       }
     },
     moveV: function(e) {
-      var dragEl = this.dragElObj,
-        placeEl = this.placeElObj,
-        parent, prev, expand, next, opt = this.treeOptions,
-        list, mouse = this.mouse;
-      this.pointEl = document.elementFromPoint(e.pageX - document.body.scrollLeft, e.pageY - (window.pageYOffset || document.documentElement.scrollTop));
-      if (this.pointEl.classList.contains(opt.handleClass)) {
-        this.pointEl = this.parent(this.pointEl, opt.itemNodeName);
+      let placeEl = this.placeElObj, opt = this.treeOptions, pointEl;
+
+      pointEl = document.elementFromPoint(e.pageX - (document.body.scrollLeft || window.pageXOffset), e.pageY - (window.pageYOffset || document.documentElement.scrollTop));
+      if (pointEl.tagName.toLowerCase() !== "li") {
+        pointEl = parentNode(pointEl, "li", this.root);
       }
-      if (!this.pointEl || !this.pointEl.classList.contains(opt.itemClass)) return;
-      var before = e.offsetY < (this.pointEl.offsetHeight / 2);
+      if (!pointEl) return;
+      var before = e.offsetY < (pointEl.offsetHeight / 2);
+
       if (before) {
-        this.pointEl.parentElement.insertBefore(placeEl, this.pointEl);
+        pointEl.parentElement.insertBefore(placeEl, pointEl);
       } else {
-        this.pointEl.parentElement.insertBefore(placeEl, this.pointEl.nextSibling);
+        pointEl.parentElement.insertBefore(placeEl, pointEl.nextSibling);
       }
     },
     dragMove: function(e) {
@@ -286,41 +223,53 @@ export default {
         top = e.pageY - mouse.offsetY;
       if (this.dragEl) {
         this.setMouse(e);
-        (dragEl.style.left = `${left}px`, dragEl.style.top = `${top}px`);
+        dragEl.style.left = `${left}px`; dragEl.style.top = `${top}px`;
+
         /*** move horizontal*/
-        if (mouse.dirAx && opt.threshold <= mouse.distAxX) {
+        if (mouse.dirAx && opt.threshold <= mouse.distAxX && mouse.moving) {
           // reset move distance on x-axis for new phase
           this.moveH(e);
         }
+
         /* move vertical*/
-        if (!mouse.dirAx) {
+        else if (!mouse.dirAx && mouse.moving && opt.threshold <= mouse.distAxY) {
           this.moveV(e);
         }
       }
     },
     dragStop: function(e) {
       e = e.touches ? e.touches[0] : e;
-      var el, opt, target, newParent, oldParent, newParentId, targetId, oldParentId, newSort, oldSort, dragEl, placeEl, children;
+      let el, opt, target, newParentId, targetId, oldParentId, dragEl, placeEl, children;
+      /*if element be dragged */
       if (this.dragEl) {
         opt = this.treeOptions;
         placeEl = this.placeElObj;
         dragEl = this.dragElObj;
-        el = dragEl.querySelector(opt.itemNodeName);
-        newParentId = (this.closest(placeEl, opt.itemNodeName) ? this.closest(placeEl, opt.itemNodeName).dataset.id : 0);
-        targetId = el.dataset.id;
-        newParentId = parseInt(newParentId);
-        targetId = parseInt(targetId);
+        el = dragEl.querySelector("li");
+
+        /*parent element is li*/
+        newParentId = parseInt(closestNode(placeEl, "li") ? closestNode(placeEl, "li").dataset.id : 0);
+        targetId = parseInt(el.dataset.id);
+
         target = this.dataMap.get(targetId);
         oldParentId = parseInt(target[opt.parentKey]);
+
         if (newParentId)
           this.includeInfo[newParentId].nodeCL++;
         if (oldParentId)
           this.includeInfo[oldParentId].nodeCL--;
 
         el.parentNode.removeChild(el);
-        placeEl.parentElement.insertBefore(el, placeEl);
+        /*there not exist ul in the li element */
+        if(placeEl.parentElement.tagName.toLowerCase() === "li"){
+          let ul = placeEl.parentNode.querySelector("ul");
+           ul = ul ? ul : document.createElement('ul');
+           ul.appendChild(el);
+           placeEl.parentNode.appendChild(ul);
+        }else
+          placeEl.parentElement.insertBefore(el, placeEl);
 
-        this.newP = this.parent(el, opt.listNodeName);
+        this.newP = parentNode(el, "ul");
         children = this.oldP.childNodes;
 
         this.setSort(children, opt);
@@ -338,8 +287,8 @@ export default {
     },
     setSort(children, opt) {
       for (var i = 0, j = 0; i < children.length; i++) {
-        let item, tempId, tempObj;
-        if (children[i].matches(opt.itemNodeName)) tempId = children[i].dataset.id;
+        let tempId, tempObj;
+        if (children[i].matches("li")) tempId = children[i].dataset.id;
         else
           continue;
         tempId = parseInt(tempId);
@@ -367,17 +316,9 @@ export default {
         distAxX: 0,
         distAxY: 0
       };
-      this.isTouch = false;
       this.moving = false;
-      this.dragEl = false,
-        this.placeEl = false,
-        this.dragRootEl = null;
-      this.dragDepth = 0;
-      this.hasNewRoot = false;
-      this.pointEl = null;
-    },
-    handlecheckedChange(node) {
-      this.store.changeCheckStatus(node)
+      this.dragEl = false;
+      this.placeEl = false;
     },
   },
   components: {
@@ -387,73 +328,22 @@ export default {
 </script>
 
 <style lang="scss">
-.vim-tree {
-    margin: 1em 0 0 1em;
-    padding: 0 0 1px;
-    list-style: none;
-    color: #00d1b2;
-    position: relative;
-    ul {
-        list-style: none;
-        margin: 1em 0 0 1em;
-        position: relative;
+  $border-color: #00d1b2;
+  .vim-tree {
+    text-align: left;
+    * {
+      list-style: none;
     }
-    ul:before {
-        content: "";
-        display: block;
-        width: 0;
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        border-left: 1px solid;
+    .collapse-expand {
+      position: absolute;
+      margin-left: -1rem;
+      cursor: pointer;
+      border: 5px solid transparent;
+      line-height: 1;
+      margin-top: -.2rem;
     }
-    li {
-        margin: 1em 0 0;
-        padding: 0 0 0 1.5em;
-        line-height: 2em;
-        font-weight: bold;
-        position: relative;
-    }
-    li:before {
-        content: "";
-        display: block;
-        width: 10px;
-        height: 0;
-        border-top: 1px solid;
-        margin-top: -1px;
-        position: absolute;
-        top: 1em;
-        left: 0;
-    }
-
-    li > span.vim-tree-expand-collapse {
-        position: relative;
-        left: -27px;
-        top: 4px;
-        margin-right: -23px;
-        float: left;
-    }
-    li:last-child:before {
-        background: white;
-        height: auto;
-        top: 1em;
-        bottom: 0;
-    }
-
-}
-.vim-tree:before {
-    content: "";
-    display: block;
-    width: 0;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    border-left: 1px solid;
-}
-
-.placeHolder {
+  }
+  .placeHolder {
     margin: 5px 0;
     padding: 0;
     min-height: 30px;
@@ -463,11 +353,12 @@ export default {
     line-height: 20px;
     list-style: none;
     position: relative;
-}
+  }
 
-.dragel {
+
+  .dragEl {
     position: absolute;
     pointer-events: none;
     z-index: 999;
-}
+  }
 </style>
