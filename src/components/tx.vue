@@ -1,11 +1,14 @@
+<script>
 export default {
   name: "tx",
   render(h){
-    return (
-      <div>vvv</div>
-    );
+
   },
-  data(){
+  mounted(){
+    //console.log(this.$vnode);
+  },
+  components: {
 
   }
 }
+</script>

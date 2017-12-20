@@ -10,7 +10,6 @@ function resolve (dir) {
 module.exports = {
   entry: {
     app: './src/main.js'
-    //app: './src/components/tree/index.js'
   },
   output: {
     path: config.build.assetsRoot,
@@ -53,7 +52,31 @@ module.exports = {
           limit: 10000,
           name: utils.assetsPath('fonts/[name].[hash:7].[ext]')
         }
-      }
+      },
+      // {
+      //   test: /\.scss$/,
+      //   use: [
+          // {
+          //   loader: "vue-style-loader"
+          // },
+          // {
+          //   loader: "css-loader",
+          //   // options: { importLoaders: 1 }  // 处理css时需要添加
+          // },
+          // {
+          //   loader: "postcss-loader",
+          //   options: {
+          //     ident: 'postcss',
+          //     plugins: (loader) => [
+          //       require('autoprefixer')(),
+          //     ]
+          //   }
+          // },
+          // {
+          //   loader: "sass-loader"
+          // }
+      //   ]
+      // }
     ]
   }
 }

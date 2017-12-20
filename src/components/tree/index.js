@@ -1,2 +1,10 @@
 import VueDragSortTree from './tree.vue';
-export default VueDragSortTree;
+
+function tree(component) {
+  if(component != null && component instanceof Object){
+    VueDragSortTree.components.TreeNode.components.cell=component;
+  }
+  return VueDragSortTree;
+}
+
+export default tree;

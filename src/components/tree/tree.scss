@@ -1,0 +1,16 @@
+$border-color: #00d1b2;
+.vim-tree{
+  ul{
+    position: relative;
+  }
+  ul:before {
+    content: "";
+    display: block;
+    width: 0;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    border-left: 1px solid $border-color;
+  }
+}
