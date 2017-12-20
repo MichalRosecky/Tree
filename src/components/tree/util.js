@@ -45,3 +45,9 @@ export function nextNode(el, selector) {
   }
   return null;
 }
+/*
+*  @param e{object} mouse event
+* */
+export function elementFromPoint(e) {
+  return document.elementFromPoint(e.pageX - (document.body.scrollLeft || window.pageXOffset), e.pageY - (window.pageYOffset || document.documentElement.scrollTop));
+}

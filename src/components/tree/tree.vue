@@ -14,7 +14,7 @@
 <script>
 
   import TreeNode from './tree-node.vue'
-  import {nextNode, prevNode, parentNode, closestNode} from './util'
+  import {nextNode, prevNode, parentNode, closestNode, elementFromPoint} from './util'
 
   export default {
   name: 'tree',
@@ -66,7 +66,6 @@
 
   },
   mounted() {
-    let opt = this.treeOptions;
     this.root = document.getElementById(this.treeOptions.treeId);
     [this.dragElObj] = this.root.getElementsByClassName("dragEl");
     [this.placeElObj] = this.root.getElementsByClassName("placeHolder");
@@ -172,7 +171,7 @@
       mouse.dirAx = newAx;
     },
     moveH: function(e) {
-      let placeEl = this.placeElObj, parent, prev, expand, next, opt = this.treeOptions,
+      let placeEl = this.placeElObj, parent, prev, expand, next,
         list, mouse = this.mouse;
       // reset move distance on x-axis for new phase
       mouse.distAxX = 0;
@@ -200,8 +199,7 @@
     },
     moveV: function(e) {
       let placeEl = this.placeElObj, opt = this.treeOptions, pointEl;
-
-      pointEl = document.elementFromPoint(e.pageX - (document.body.scrollLeft || window.pageXOffset), e.pageY - (window.pageYOffset || document.documentElement.scrollTop));
+      pointEl = elementFromPoint(e);
       if (pointEl.tagName.toLowerCase() !== "li") {
         pointEl = parentNode(pointEl, "li", this.root);
       }

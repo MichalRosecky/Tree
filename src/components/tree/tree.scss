@@ -1,7 +1,9 @@
 $border-color: #00d1b2;
+$ul-interval: 2rem;
 .vim-tree{
   ul{
     position: relative;
+    padding-left: $ul-interval;
   }
   ul:before {
     content: "";
@@ -12,5 +14,11 @@ $border-color: #00d1b2;
     bottom: 0;
     left: 0;
     border-left: 1px solid $border-color;
+  }
+  li::before{
+    content: "-";
+    color: $border-color;
+    position: absolute;
+    margin-left: -$ul-interval;
   }
 }
