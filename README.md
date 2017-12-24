@@ -1,6 +1,3 @@
-# tree [github](https://github.com/VimMing/Tree) [npm](https://www.npmjs.com/package/vue-drag-sort-tree)
-
-> A Vue.js component
 
 ## Effect
 >
@@ -97,21 +94,18 @@ export default {
 // demo.vue
 
 <script>
-import Tree from 'vue-drag-sort-tree'
+...
 import tpl from 'tpl.vue'
 const tree = Tree(tpl);
-</script>
 
-...         options: {
-            sortKey: 'order',
-            parentKey: 'parentId',
-            childrenKey: "children",
-            handle: "dragger"
+...     
+options: {
+          ...
+            handleClass: "dragger"
           },
           ....
 
-
-
+</script>
 ```
 
  ## Contact me
