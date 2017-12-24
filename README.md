@@ -75,7 +75,7 @@ export default {
 ```
 // tpl.vue
 <template>
-  <span>{{data.id}}</span>
+  <span class="dragger">{{data.id}}</span>
 </template>
 
 <script>
@@ -93,6 +93,22 @@ export default {
     }
   }
 </script>
+
+// demo.vue
+
+<script>
+import Tree from 'vue-drag-sort-tree'
+import tpl from 'tpl.vue'
+const tree = Tree(tpl);
+</script>
+
+...         options: {
+            sortKey: 'order',
+            parentKey: 'parentId',
+            childrenKey: "children",
+            handle: "dragger"
+          },
+          ....
 
 
 
