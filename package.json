@@ -1,6 +1,6 @@
 {
   "name": "vue-drag-sort-tree",
-  "version": "1.2.4",
+  "version": "1.2.7",
   "description": "基于vue2拖拽树",
   "main": "dist/index.js",
   "keywords": [
@@ -16,6 +16,9 @@
     "start": "node build/dev-server.js",
     "build": "node build/build.js",
     "buildPack": "webpack --config ./build/webpack.buildComponent.conf.js"
+  },
+  "repository": {
+
   },
   "dependencies": {
   },

@@ -26,9 +26,10 @@ npm install vue-drag-sort-tree --save
 
 ```
 
- ## Usage
+ ## Basic Usage
 
 ```
+
 // demo.Vue
 <template>
 <div class="hello">
@@ -36,18 +37,19 @@ npm install vue-drag-sort-tree --save
     <tree ref='tree' :treeData="treeData" :options="options"/>
   </div>
 </template>
+
 <script>
 import Tree from 'vue-drag-sort-tree'
+const tree = Tree();
+
 export default {
   name: 'hello',
-    components: { Tree },
+    components: { tree },
       data() {
         return {
          options: {
-            injectComponent: "", // you can custom the content of the tree item, if it empty , component will use default.
-            sortKey: 'order',                   
+            sortKey: 'order',
             parentKey: 'parentId',
-            searchKey: 'label',
             childrenKey: "children",
           },
           treeData: [
@@ -62,11 +64,40 @@ export default {
     },
    methods: {
     getdata(){
-      this.formated = this.$refs.tree.getFomatedData();
+      this.formated = this.$refs.tree.reformatData();
     }
   }
  }
 ```
+
+## Advantage Usage
+
+```
+// tpl.vue
+<template>
+  <span>{{data.id}}</span>
+</template>
+
+<script>
+  export default {
+    props: {
+      d: [Object]
+    },
+    data() {
+      return {
+        data: {}
+      }
+    },
+    mounted(){
+      this.data = this.d;
+    }
+  }
+</script>
+
+
+
+```
+
  ## Contact me
  vimmingshe@gmail.com
 

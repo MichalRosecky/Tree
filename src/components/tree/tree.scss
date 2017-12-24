@@ -1,9 +1,9 @@
 $border-color: #00d1b2;
-$ul-interval: 2rem;
+$ul-spacing: 2rem;
 .vim-tree{
   ul{
     position: relative;
-    padding-left: $ul-interval;
+    padding-left: $ul-spacing;
   }
   ul:before {
     content: "";
@@ -19,6 +19,6 @@ $ul-interval: 2rem;
     content: "-";
     color: $border-color;
     position: absolute;
-    margin-left: -$ul-interval;
+    margin-left: -$ul-spacing;
   }
 }
